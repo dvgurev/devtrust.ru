@@ -1,0 +1,530 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at       Int?
+  token_type       String?
+  scope            String?
+  id_token         String? @db.Text
+  session_state    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image        String?
+  password     String?
+  phone        String?
+  isVerified   Boolean   @default(false)
+  verificationToken String?
+  verificationExpires DateTime?
+  resetPasswordToken  String?
+  resetPasswordExpires DateTime?
+  referralCode String?   @unique // Персональный реферальный код пользователя
+  referredById String?   // Кто пригласил этого пользователя
+  totalReferrals Int     @default(0) // Общее количество успешных рефералов
+  referralCredits Int    @default(0) // Баллы/кредиты за рефералы (в копейках)
+  createdAt    DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions    Session[]
+  memberships Membership[]
+  reviews     Review[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  appAccesses  AppAccess[]
+  sentReferrals Referral[] @relation("referrer")
+  receivedReferrals Referral[] @relation("referee")
+  referralRewards ReferralReward[]
+  ssoTokens    SSOToken[]
+
+  referredBy   User?     @relation("UserReferredBy", fields: [referredById], references: [id], onDelete: SetNull)
+  referredUsers User[]   @relation("UserReferredBy")
+
+  @@index([referralCode])
+  @@index([referredById])
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  inn         String?
+  address    String?
+  phone      String?
+  stripeCustomerId String?
+  createdAt   DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  memberships    Membership[]
+  subscriptions Subscription[]
+  invites       OrganizationInvite[]
+  invoices    Invoice[]
+  ssoTokens    SSOToken[]
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Membership {
+  id             String        @id @default(cuid())
+  userId          String
+  organizationId String
+  role           MembershipRole @default(MEMBER)
+  createdAt       DateTime      @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model OrganizationInvite {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String
+  role           MembershipRole @default(MEMBER)
+  token          String   @unique
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+enum AppStatus {
+  DRAFT
+  ACTIVE
+  MAINTENANCE
+  HIDDEN
+}
+
+model App {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  description  String?   @db.Text
+  subdomain    String?
+  iconUrl      String?
+  isFree       Boolean   @default(false)
+  status       AppStatus @default(DRAFT)
+  internalUrl  String?
+  averageRating Float    @default(0)
+  reviewsCount Int       @default(0)
+  featured     Boolean   @default(false)
+  isExternal   Boolean   @default(false)
+  externalUrl  String?
+  customDomain String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category     AppCategory? @relation(fields: [categoryId], references: [id])
+  categoryId   String?
+
+  plans        Plan[]
+  screenshots AppScreenshot[]
+  changelogs  AppChangelog[]
+  reviews     Review[]
+  bundleApps  BundleApp[]
+  externalConfig ExternalAppConfig?
+  ssoTokens   SSOToken[]
+}
+
+model AppCategory {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  description String?
+  sortOrder   Int    @default(0)
+
+  apps App[]
+
+  @@index([slug])
+}
+
+model AppScreenshot {
+  id        String @id @default(cuid())
+  appId     String
+  url       String
+  sortOrder Int   @default(0)
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+}
+
+model AppChangelog {
+  id          String   @id @default(cuid())
+  appId       String
+  version     String
+  description String   @db.Text
+  releasedAt  DateTime @default(now())
+  isLatest    Boolean  @default(false)
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+}
+
+model Plan {
+  id             String   @id @default(cuid())
+  appId          String
+  name           String
+  slug           String
+  price          Int
+  priceId        String?
+  yearlyPrice    Int?
+  yearlyPriceId  String?
+  oneTimePrice   Int?
+  oneTimePriceId String?
+  description    String?
+  features       Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  app           App           @relation(fields: [appId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@unique([appId, slug])
+  @@index([appId])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  PAST_DUE
+}
+
+model Subscription {
+  id               String            @id @default(cuid())
+  organizationId   String
+  planId           String
+  status           SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd DateTime
+  cancelAtPeriodEnd Boolean           @default(false)
+  stripeSubscriptionId String?
+  stripeCustomerId  String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  appAccesses  AppAccess[]
+  invoices    Invoice[]
+  usage       AppUsage[]
+
+  @@index([organizationId])
+  @@index([planId])
+}
+
+model AppUsage {
+  id              String   @id @default(cuid())
+  subscriptionId  String
+  date            DateTime @db.Date
+  metrics         Json    @default("{}")
+  createdAt       DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, date])
+  @@index([subscriptionId])
+  @@index([date])
+}
+
+model AppAccess {
+  id              String   @id @default(cuid())
+  subscriptionId String
+  userId          String
+  createdAt       DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, userId])
+  @@index([subscriptionId])
+  @@index([userId])
+}
+
+model ExternalAppConfig {
+  id              String   @id @default(cuid())
+  appId           String   @unique
+  ssoEnabled      Boolean  @default(true)
+  apiSecret       String
+  allowedDomains  String[] @default([])
+  webhookUrl     String?
+  webhookSecret  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+}
+
+model SSOToken {
+  id            String   @id @default(cuid())
+  userId        String
+  organizationId String
+  appId         String
+  accessToken   String   @unique
+  refreshToken  String?  @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  app           App         @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([appId])
+  @@index([accessToken])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  appId       String
+  userId     String
+  rating     Int
+  text       String?   @db.Text
+  isPublished Boolean @default(false)
+  isModerated Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  app   App          @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reply ReviewReply?
+
+  @@index([appId])
+  @@index([userId])
+}
+
+model ReviewReply {
+  id        String   @id @default(cuid())
+  reviewId  String   @unique
+  text     String   @db.Text
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  content     String     @db.Text
+  excerpt     String?
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  category   PostCategory? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  @@index([slug])
+  @@index([status])
+}
+
+model PostCategory {
+  id    String @id @default(cuid())
+  name  String
+  slug  String @unique
+
+  posts Post[]
+
+  @@index([slug])
+}
+
+model PromoCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  discount Int
+  expiresAt DateTime?
+  maxUses   Int?
+  usedCount Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([code])
+}
+
+model Bundle {
+  id          String @id @default(cuid())
+  name       String
+  description String?
+  discount   Int
+  createdAt  DateTime @default(now())
+
+  apps BundleApp[]
+}
+
+model BundleApp {
+  id       String @id @default(cuid())
+  bundleId String
+  appId   String
+
+  bundle Bundle @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  app     App    @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, appId])
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  VOID
+}
+
+model Invoice {
+  id               String        @id @default(cuid())
+  organizationId   String
+  subscriptionId  String?
+  amount         Int
+  currency       String        @default("RUB")
+  status         InvoiceStatus @default(PENDING)
+  stripeInvoiceId String?
+  pdfUrl          String?
+  paidAt         DateTime?
+  createdAt       DateTime      @default(now())
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  text      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  userId     String?
+  action    String
+  entityType String?
+  entityId  String?
+  oldValue  Json?
+  newValue  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model Referral {
+  id          String         @id @default(cuid())
+  referrerId  String         // ID пользователя, который пригласил
+  refereeId   String?        // ID приглашенного пользователя (может быть null до регистрации)
+  code        String         @unique // Реферальный код (например, "IVAN25")
+  email       String?        // Email приглашенного (если еще не зарегистрирован)
+  status      ReferralStatus @default(PENDING)
+  rewardType  String         @default("CREDIT") // CREDIT, DISCOUNT, CASH
+  rewardValue Int            @default(0) // Значение вознаграждения (в копейках/процентах)
+  completedAt DateTime?      // Когда реферал завершился (купил приложение и т.д.)
+  expiresAt   DateTime?      // Срок действия реферальной ссылки
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  referrer    User           @relation("referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee     User?          @relation("referee", fields: [refereeId], references: [id], onDelete: SetNull)
+  rewards     ReferralReward[] // Награды, связанные с этим рефералом
+
+  @@index([referrerId])
+  @@index([refereeId])
+  @@index([code])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReferralReward {
+  id          String   @id @default(cuid())
+  referralId  String
+  userId      String
+  type        String   // CREDIT_APPLIED, DISCOUNT_USED, CASH_PAID
+  amount      Int      // Сумма в копейках
+  description String?
+  metadata    Json?    // Дополнительные данные
+  createdAt   DateTime @default(now())
+
+  referral    Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([referralId])
+  @@index([userId])
+  @@index([createdAt])
+}
