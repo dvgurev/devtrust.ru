@@ -26,19 +26,6 @@ services:
     volumes:
       - redis_data:/data
 
-  redis-rest-proxy:
-    image: upstash/redis-rest-proxy:latest
-    container_name: devtrust-redis-rest-proxy-dev
-    restart: unless-stopped
-    environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      # Необязательно: AUTH_TOKEN, если Redis требует пароль
-    ports:
-      - "8079:80"
-    depends_on:
-      - redis
-
   minio:
     image: minio/minio:latest
     container_name: devtrust-minio-dev
@@ -49,9 +36,30 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
       - "9000:9000"
-      - "9001:9001"
+      - "9002:9001"
     volumes:
       - minio_data:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    container_name: devtrust-web-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
 
 volumes:
   postgres_data:

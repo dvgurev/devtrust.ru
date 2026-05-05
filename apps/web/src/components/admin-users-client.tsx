@@ -8,6 +8,7 @@ type UserType = {
   id: string
   email: string
   name: string | null
+  role: "USER" | "ADMIN"
   createdAt: Date
   isVerified: boolean
   memberships: { organization: { name: string } | null }[]
@@ -288,7 +289,7 @@ export function UsersClient({ users: initialUsers }: Props) {
                       <button
                         onClick={() => handleDelete(user.id, user.email)}
                         className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        disabled={user.email === "admin@devtrust.ru"}
+                        disabled={user.role === "ADMIN"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

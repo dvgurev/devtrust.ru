@@ -53,21 +53,8 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/platform
-      - AUTH_SECRET=your-secret-key-change-in-production
-      - AUTH_URL=http://localhost:3000
-      - AUTH_DOMAIN=.localhost
-      - MINIO_ENDPOINT=minio
-      - MINIO_PORT=9000
-      - MINIO_CONSOLE_PORT=9001
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
-      - REDIS_URL=redis://redis:6379
-      - RESEND_API_KEY=re_123456789
-      - STRIPE_SECRET_KEY=sk_test_...
-      - STRIPE_PUBLISHABLE_KEY=pk_test_...
-      - STRIPE_WEBHOOK_SECRET=whsec_...
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,20 +62,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-    networks:
-      - devtrust-network
-
-  crm:
-    build:
-      context: .
-      dockerfile: apps/crm/Dockerfile
-    container_name: devtrust-crm
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    environment:
-      - NODE_ENV=production
-      - PORT=3001
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed-prod.ts && pnpm start"
     networks:
       - devtrust-network
 

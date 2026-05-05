@@ -37,6 +37,11 @@ model Session {
   @@index([userId])
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -46,14 +51,15 @@ model User {
   password     String?
   phone        String?
   isVerified   Boolean   @default(false)
+  role         UserRole  @default(USER)
   verificationToken String?
   verificationExpires DateTime?
   resetPasswordToken  String?
   resetPasswordExpires DateTime?
-  referralCode String?   @unique // Персональный реферальный код пользователя
-  referredById String?   // Кто пригласил этого пользователя
-  totalReferrals Int     @default(0) // Общее количество успешных рефералов
-  referralCredits Int    @default(0) // Баллы/кредиты за рефералы (в копейках)
+  referralCode String?   @unique
+  referredById String?
+  totalReferrals Int     @default(0)
+  referralCredits Int    @default(0)
   createdAt    DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -488,21 +494,21 @@ enum ReferralStatus {
 
 model Referral {
   id          String         @id @default(cuid())
-  referrerId  String         // ID пользователя, который пригласил
-  refereeId   String?        // ID приглашенного пользователя (может быть null до регистрации)
-  code        String         @unique // Реферальный код (например, "IVAN25")
-  email       String?        // Email приглашенного (если еще не зарегистрирован)
+  referrerId  String
+  refereeId   String?
+  code        String         @unique
+  email       String?
   status      ReferralStatus @default(PENDING)
-  rewardType  String         @default("CREDIT") // CREDIT, DISCOUNT, CASH
-  rewardValue Int            @default(0) // Значение вознаграждения (в копейках/процентах)
-  completedAt DateTime?      // Когда реферал завершился (купил приложение и т.д.)
-  expiresAt   DateTime?      // Срок действия реферальной ссылки
+  rewardType  String         @default("CREDIT")
+  rewardValue Int            @default(0)
+  completedAt DateTime?
+  expiresAt   DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   referrer    User           @relation("referrer", fields: [referrerId], references: [id], onDelete: Cascade)
   referee     User?          @relation("referee", fields: [refereeId], references: [id], onDelete: SetNull)
-  rewards     ReferralReward[] // Награды, связанные с этим рефералом
+  rewards     ReferralReward[]
 
   @@index([referrerId])
   @@index([refereeId])
@@ -515,10 +521,10 @@ model ReferralReward {
   id          String   @id @default(cuid())
   referralId  String
   userId      String
-  type        String   // CREDIT_APPLIED, DISCOUNT_USED, CASH_PAID
-  amount      Int      // Сумма в копейках
+  type        String
+  amount      Int
   description String?
-  metadata    Json?    // Дополнительные данные
+  metadata    Json?
   createdAt   DateTime @default(now())
 
   referral    Referral @relation(fields: [referralId], references: [id], onDelete: Cascade)

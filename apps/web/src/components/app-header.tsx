@@ -373,7 +373,7 @@ export function AppHeader() {
                             <LayoutDashboard className="w-4 h-4" />
                             Мой кабинет
                           </Link>
-                          {session.user?.email === "admin@devtrust.ru" && (
+                          {session.user?.role === "ADMIN" && (
                             <Link
                               href="/admin"
                               onClick={() => setUserMenuOpen(false)}

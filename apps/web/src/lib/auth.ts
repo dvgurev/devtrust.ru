@@ -1,32 +1,26 @@
+// apps/web/src/lib/auth.ts
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-
-const isDev = process.env.NODE_ENV !== "production"
+import { prisma } from "@/lib/prisma"
+import type { UserRole } from "@prisma/client"
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // Убираем debug для чистоты логов
+  debug: false,
+
+  // Явно передаём секрет
+  secret: process.env.NEXTAUTH_SECRET,
+
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
-  cookies: {
-    sessionToken: {
-      name: "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        path: "/",
-        maxAge: 30 * 24 * 60 * 60,
-      },
-    },
-  },
+
   pages: {
     signIn: "/login",
   },
+
   providers: [
     Credentials({
       name: "credentials",
@@ -58,23 +52,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         return {
           id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
+          email: user.email ?? "",
+          name: user.name ?? undefined,
+          image: user.image ?? undefined,
+          role: user.role as UserRole,
         }
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.role = user.role
       }
       return token
     },
+
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
+        session.user.role = token.role as UserRole
       }
       return session
     },

@@ -69,9 +69,9 @@ async function updateAppRating(appId: string) {
 async function isAdmin(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { email: true },
+    select: { role: true },
   })
-  return user?.email === "admin@devtrust.ru"
+  return user?.role === "ADMIN"
 }
 
 export async function GET(request: NextRequest) {

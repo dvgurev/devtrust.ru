@@ -1,10 +1,11 @@
+// apps/web/src/app/login/page.tsx
 "use client"
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import { Sparkles, Mail, Lock, ArrowRight, Check, Shield, Zap, Users } from "lucide-react"
@@ -24,10 +25,10 @@ const benefits = [
 ]
 
 export default function LoginPage() {
-  const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const {
     register,
     handleSubmit,
@@ -39,7 +40,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setError(null)
     setIsLoading(true)
-    
+
     try {
       const result = await signIn("credentials", {
         email: data.email,
@@ -53,8 +54,12 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/dashboard")
-      router.refresh()
+      if (result?.ok) {
+        // Получаем URL для редиректа
+        const redirectUrl = searchParams.get("redirect") || "/dashboard"
+        // Используем window.location.href для полного обновления страницы
+        window.location.href = redirectUrl
+      }
     } catch {
       setError("Произошла ошибка. Попробуйте позже.")
       setIsLoading(false)
@@ -63,7 +68,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Background */}
       <section className="relative pt-20 pb-12 md:pt-28 md:pb-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-orange-50" />
         <div className="absolute top-10 left-[10%] w-[400px] h-[400px] bg-red-200/30 rounded-full blur-3xl" />
@@ -105,7 +109,6 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Login Form Section */}
       <section className="relative -mt-10 z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">

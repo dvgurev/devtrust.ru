@@ -1,34 +1,17 @@
 import { auth } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
+import { Package, Calendar, Users, Wallet, Sparkles, Plus, CreditCard, AppWindow, ArrowRight, Zap, Shield } from "lucide-react"
 import Link from "next/link"
-import { AppWindow, Calendar, CreditCard, ArrowRight, Plus, Sparkles, Users, TrendingUp, Zap, Shield, Package, Wallet } from "lucide-react"
 
 export default async function DashboardPage() {
   const session = await auth()
-  if (!session?.user || !session.user.id) {
-    return null
+
+  if (!session?.user) {
+    redirect("/login?redirect=/dashboard")
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      memberships: {
-        include: {
-          organization: {
-            include: {
-              subscriptions: {
-                include: {
-                  plan: { include: { app: true } },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  }) as any
+  const subscriptions = session.user?.memberships?.flatMap((m: any) => m.organization?.subscriptions || []) || []
 
-  const subscriptions = user?.memberships?.flatMap((m: any) => m.organization?.subscriptions || []) || []
   const activeSubscriptions = subscriptions.filter((s: any) => s.status === "ACTIVE")
   const expiringSoon = subscriptions.filter((s: any) => {
     const daysLeft = s.currentPeriodEnd ? Math.ceil((new Date(s.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
@@ -60,9 +43,8 @@ export default async function DashboardPage() {
         <div className="absolute top-10 left-[10%] w-[400px] h-[400px] bg-red-200/30 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-[5%] w-[300px] h-[300px] bg-orange-200/30 rounded-full blur-3xl" />
 
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div className="px-6 lg:px-8 relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
               <div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl border border-white/40 text-red-500 rounded-full text-sm font-medium mb-4 shadow-sm">
                   <Sparkles className="w-4 h-4" />
@@ -82,14 +64,12 @@ export default async function DashboardPage() {
               </Link>
             </div>
           </div>
-        </div>
       </section>
 
       {/* Stats Grid */}
       <section className="relative -mt-6 z-10">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="px-6 lg:px-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {stats.map((stat, i) => {
                 const Icon = stat.icon
                 const colorClasses = {
@@ -122,12 +102,11 @@ export default async function DashboardPage() {
               })}
             </div>
           </div>
-        </div>
       </section>
 
       {/* Main Content */}
       <section className="py-12">
-        <div className="container mx-auto px-4">
+        <div className="px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Left Column - Quick Actions */}

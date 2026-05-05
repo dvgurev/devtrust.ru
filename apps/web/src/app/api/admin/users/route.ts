@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAdmin } from "@/lib/admin"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -17,19 +17,9 @@ const updateUserSchema = z.object({
   isVerified: z.boolean().optional(),
 })
 
-async function checkAdmin() {
-  const session = await auth()
-  if (!session?.user?.email || session.user.email !== "admin@devtrust.ru") {
-    return false
-  }
-  return true
-}
-
 export async function GET() {
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 })
-  }
+  const admin = await requireAdmin()
+  if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
   const users = await prisma.user.findMany({
     include: {
@@ -45,10 +35,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 })
-  }
+  const admin = await requireAdmin()
+  if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
   try {
     const body = await request.json()
@@ -73,6 +61,7 @@ export async function POST(request: NextRequest) {
         email: validated.email,
         password: hashedPassword,
         isVerified: true,
+        role: "USER",
       },
     })
 

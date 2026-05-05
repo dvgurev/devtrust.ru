@@ -64,22 +64,11 @@ export default function RegisterPage() {
         return
       }
 
-      const signInResponse = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      await signIn("credentials", {
+        email: data.email,
+        password: data.password,
+        callbackUrl: '/dashboard',
       })
-
-      if (!signInResponse.ok) {
-        router.push("/login")
-        return
-      }
-
-      router.push("/dashboard")
-      router.refresh()
     } catch {
       setError("Произошла ошибка. Попробуйте позже.")
       setIsLoading(false)

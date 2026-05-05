@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
+import { requireAdmin } from "@/lib/admin"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
@@ -11,22 +11,12 @@ const updateUserSchema = z.object({
   isVerified: z.boolean().optional(),
 })
 
-async function checkAdmin() {
-  const session = await auth()
-  if (!session?.user?.email || session.user.email !== "admin@devtrust.ru") {
-    return false
-  }
-  return true
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 })
-  }
+  const admin = await requireAdmin()
+  if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
   const { id } = await params
   const user = await prisma.user.findUnique({
@@ -51,10 +41,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 })
-  }
+  const admin = await requireAdmin()
+  if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
   const { id } = await params
 
@@ -118,10 +106,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const isAdmin = await checkAdmin()
-  if (!isAdmin) {
-    return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 })
-  }
+  const admin = await requireAdmin()
+  if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
   const { id } = await params
 
@@ -133,7 +119,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Пользователь не найден" }, { status: 404 })
   }
 
-  if (user.email === "admin@devtrust.ru") {
+  if (user.role === "ADMIN") {
     return NextResponse.json(
       { error: "Нельзя удалить администратора" },
       { status: 400 }

@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         name: validated.name,
         email: validated.email,
         password: hashedPassword,
+        role: "USER",
       },
     })
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { requireAdmin } from "@/lib/admin"
 import { randomBytes } from "crypto"
 import { z } from "zod"
 
@@ -15,10 +15,8 @@ const createExternalAppSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const admin = await requireAdmin()
+    if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
     const apps = await prisma.app.findMany({
       where: { isExternal: true },
@@ -39,10 +37,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    const admin = await requireAdmin()
+    if (!admin.ok) return NextResponse.json({ error: "Доступ запрещён" }, { status: admin.status })
 
     const body = await request.json()
     const data = createExternalAppSchema.parse(body)

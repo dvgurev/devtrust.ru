@@ -1,59 +1,82 @@
 import Redis from "ioredis"
 
-// Инициализация Redis клиента с fallback
-let redis: any
-try {
-  redis = new Redis({
-    host: process.env.REDIS_HOST || "localhost",
-    port: parseInt(process.env.REDIS_PORT || "6379"),
-    retryStrategy: () => null,
-    maxRetriesPerRequest: 1,
-    enableOfflineQueue: false,
-  })
+// Состояние Redis клиента
+let redisClient: any = null
+let connectionPromise: Promise<any> | null = null
 
-  redis.on("error", (err: any) => {
-    console.warn("Redis connection error:", err)
-    // Не заменяем клиент, чтобы избежать race condition
-    // Ошибки будут обрабатываться в отдельных операциях
-  })
+// Функция для получения клиента с ленивой инициализацией
+async function getRedisClient() {
+  // Если клиент уже есть и соединение активно, возвращаем его
+  if (redisClient && redisClient.status === 'ready') {
+    return redisClient
+  }
 
-  // Асинхронная проверка подключения (не блокирующая)
-  setTimeout(async () => {
+  // Если инициализация уже в процессе, ждем ее
+  if (connectionPromise) {
+    return connectionPromise
+  }
+
+  // Создаем новый клиент
+  connectionPromise = (async () => {
     try {
-      await redis.ping()
-      console.log("Redis connected successfully")
-    } catch (err) {
-      console.warn("Redis ping failed, operations may fail:", err)
+      const client = new Redis({
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379"),
+        retryStrategy: (times) => {
+          // Повторяем подключение с задержкой, максимум 3 попытки
+          if (times > 3) {
+            return null
+          }
+          return Math.min(times * 100, 3000)
+        },
+        maxRetriesPerRequest: 3,
+        enableOfflineQueue: true,
+        lazyConnect: true, // Не подключаемся сразу
+      })
+
+      // Обработчики ошибок
+      client.on("error", (err: any) => {
+        console.warn("Redis connection error:", err.message)
+        redisClient = null
+        connectionPromise = null
+      })
+
+      client.on("end", () => {
+        console.warn("Redis connection closed")
+        redisClient = null
+        connectionPromise = null
+      })
+
+      client.on("ready", () => {
+        console.log("Redis connected successfully")
+      })
+
+      // Подключаемся явно
+      await client.connect()
+
+      redisClient = client
+      return client
+    } catch (error) {
+      console.warn("Redis initialization failed:", error)
+      connectionPromise = null
+      throw error
     }
-  }, 100)
-} catch (error) {
-  console.warn("Redis initialization failed, using stub:", error)
-  // Создаем заглушку
-  redis = {
-    async get(key: string) {
-      return null
-    },
-    async set(key: string, value: any, ...args: any[]) {
-      return "OK"
-    },
-    async del(key: string) {
-      return 0
-    },
-    async pipeline() {
-      return {
-        sadd: () => {},
-        expire: () => {},
-        async exec() {
-          return []
-        }
-      }
-    },
-    async smembers(key: string) {
-      return []
-    },
-    async keys(pattern: string) {
-      return []
-    }
+  })()
+
+  return connectionPromise
+}
+
+// Функция для безопасного выполнения Redis операций
+async function safeRedisOperation<T>(
+  operation: (client: any) => Promise<T>,
+  fallback: T
+): Promise<T> {
+  try {
+    const client = await getRedisClient()
+    return await operation(client)
+  } catch (error) {
+    console.warn("Redis operation failed, using fallback:", error)
+    return fallback
   }
 }
 
@@ -75,14 +98,16 @@ export async function cached<T>(
 
   // Пытаемся получить данные из кэша
   if (ttl > 0) {
-    try {
-      const cached = await redis.get(key)
-      if (cached !== null) {
-        return JSON.parse(cached)
-      }
-    } catch (error) {
-      console.error("Redis cache get error:", error)
-      // Продолжаем выполнение функции при ошибке кэша
+    const cachedData = await safeRedisOperation(
+      async (client) => {
+        const data = await client.get(key)
+        return data !== null ? JSON.parse(data) : null
+      },
+      null
+    )
+
+    if (cachedData !== null) {
+      return cachedData
     }
   }
 
@@ -91,21 +116,22 @@ export async function cached<T>(
 
   // Сохраняем в кэш
   if (ttl > 0) {
-    try {
-      await redis.set(key, JSON.stringify(data), "EX", ttl)
+    await safeRedisOperation(
+      async (client) => {
+        await client.set(key, JSON.stringify(data), "EX", ttl)
 
-      // Сохраняем связь ключа с тегами
-      if (tags.length > 0) {
-        const pipeline = redis.pipeline()
-        tags.forEach((tag) => {
-          pipeline.sadd(`tag:${tag}`, key)
-          pipeline.expire(`tag:${tag}`, ttl + 60) // Теги живут немного дольше
-        })
-        await pipeline.exec()
-      }
-    } catch (error) {
-      console.error("Redis cache set error:", error)
-    }
+        // Сохраняем связь ключа с тегами
+        if (tags.length > 0) {
+          const pipeline = client.pipeline()
+          tags.forEach((tag) => {
+            pipeline.sadd(`tag:${tag}`, key)
+            pipeline.expire(`tag:${tag}`, ttl + 60) // Теги живут немного дольше
+          })
+          await pipeline.exec()
+        }
+      },
+      null
+    )
   }
 
   return data
@@ -115,27 +141,29 @@ export async function cached<T>(
  * Инвалидировать кэш по ключу
  */
 export async function invalidateCache(key: string): Promise<void> {
-  try {
-    await redis.del(key)
-  } catch (error) {
-    console.error("Redis cache delete error:", error)
-  }
+  await safeRedisOperation(
+    async (client) => {
+      await client.del(key)
+    },
+    null
+  )
 }
 
 /**
  * Инвалидировать все ключи с определенным тегом
  */
 export async function invalidateByTag(tag: string): Promise<void> {
-  try {
-    const key = `tag:${tag}`
-    const keys = await redis.smembers(key)
-    if (keys.length > 0) {
-      await redis.del(...keys)
-      await redis.del(key)
-    }
-  } catch (error) {
-    console.error("Redis tag invalidation error:", error)
-  }
+  await safeRedisOperation(
+    async (client) => {
+      const key = `tag:${tag}`
+      const keys = await client.smembers(key)
+      if (keys && keys.length > 0) {
+        await client.del(...keys)
+        await client.del(key)
+      }
+    },
+    null
+  )
 }
 
 /**
@@ -178,12 +206,22 @@ export function appCacheKey(slug: string): string {
  * Очистить весь кэш (только для разработки)
  */
 export async function clearAllCache(): Promise<void> {
-  try {
-    const keys = await redis.keys("*")
-    if (keys.length > 0) {
-      await redis.del(...keys)
-    }
-  } catch (error) {
-    console.error("Redis clear all error:", error)
+  await safeRedisOperation(
+    async (client) => {
+      const keys = await client.keys("*")
+      if (keys && keys.length > 0) {
+        await client.del(...keys)
+      }
+    },
+    null
+  )
+}
+
+// Опционально: функция для закрытия соединения (вызывать при завершении приложения)
+export async function closeRedisConnection(): Promise<void> {
+  if (redisClient) {
+    await redisClient.quit()
+    redisClient = null
+    connectionPromise = null
   }
 }

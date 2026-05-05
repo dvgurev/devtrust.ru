@@ -21,7 +21,7 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.73.1(react@19.2.4))
       '@prisma/client':
-        specifier: ^5.22.0
+        specifier: 5.22.0
         version: 5.22.0(prisma@5.22.0)
       '@sentry/nextjs':
         specifier: ^10.50.0
@@ -59,9 +59,6 @@ importers:
       next-sitemap:
         specifier: ^4.2.3
         version: 4.2.3(next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-      prisma:
-        specifier: ^5.22.0
-        version: 5.22.0
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -117,6 +114,9 @@ importers:
       lint-staged:
         specifier: ^16.4.0
         version: 16.4.0
+      prisma:
+        specifier: 5.22.0
+        version: 5.22.0
       tailwindcss:
         specifier: ^4
         version: 4.2.4

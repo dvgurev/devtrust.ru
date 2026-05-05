@@ -20,7 +20,7 @@ export default async function AdminUsersPage() {
     redirect("/login")
   }
 
-  const isAdmin = session.user.email === "admin@devtrust.ru"
+  const isAdmin = session.user.role === "ADMIN"
   if (!isAdmin) {
     redirect("/dashboard")
   }

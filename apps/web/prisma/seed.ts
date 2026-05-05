@@ -313,6 +313,7 @@ async function main() {
       name: "Администратор",
       password: hashedPassword,
       isVerified: true,
+      role: "ADMIN",
     },
   })
   console.log("Created admin user")
@@ -327,6 +328,7 @@ async function main() {
       name: "Тестовый Пользователь",
       password: userPassword,
       isVerified: true,
+      role: "USER",
     },
   })
   console.log("Created test user")

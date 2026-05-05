@@ -1,99 +1,76 @@
-import { auth } from "@/lib/auth"
+// apps/web/src/middleware.ts
+import { getToken } from "next-auth/jwt"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  const { pathname } = request.nextUrl
 
-  const isAuthRoute = pathname.startsWith("/dashboard") || pathname.startsWith("/admin")
-  const isApiRoute = pathname.startsWith("/api")
-  const isStaticRoute = pathname.startsWith("/_") || pathname.startsWith("/static")
-
-  // Security headers для всех ответов
-  const response = isStaticRoute || isApiRoute
-    ? NextResponse.next()
-    : await handleAuth(request, pathname, isAuthRoute)
-
-  // Добавляем security headers ко всем ответам
-  const securityHeaders = getSecurityHeaders(request)
-  securityHeaders.forEach(([key, value]) => {
-    response.headers.set(key, value)
-  })
-
-  return response
-}
-
-async function handleAuth(request: NextRequest, pathname: string, isAuthRoute: boolean) {
-  if (pathname === "/robots.txt") {
-    return new NextResponse(
-      "User-Agent: *\nAllow: /\nDisallow: /dashboard\nDisallow: /admin\nDisallow: /api",
-      { headers: { "Content-Type": "text/plain" } }
-    )
+  // Пропускаем статику и API
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/static") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next()
   }
 
-  const session = await auth()
-  const isLoggedIn = !!session?.user
+  // Защищаем только /dashboard и /admin
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+    try {
+      // Пробуем разные варианты получения токена
+      let token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      })
 
-  if (isAuthRoute && !isLoggedIn) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(loginUrl)
+      // Выводим все куки для отладки
+      const allCookies = request.cookies.getAll()
+      console.log("All cookies:", allCookies.map(c => c.name))
+
+      // Ищем сессионную куку
+      const sessionCookie = allCookies.find(c =>
+        c.name.includes("next-auth") ||
+        c.name.includes("session")
+      )
+
+      if (sessionCookie) {
+        console.log("Session cookie found:", sessionCookie.name)
+        console.log("Cookie value length:", sessionCookie.value.length)
+      } else {
+        console.log("No session cookie found!")
+      }
+
+      console.log("Token check:", {
+        pathname,
+        hasToken: !!token,
+        role: token?.role,
+        secret: process.env.NEXTAUTH_SECRET ? "SET" : "MISSING"
+      })
+
+      if (!token) {
+        const loginUrl = new URL("/login", request.url)
+        loginUrl.searchParams.set("redirect", pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+
+      if (pathname.startsWith("/admin") && token.role !== "ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", request.url))
+      }
+
+      return NextResponse.next()
+    } catch (error) {
+      console.error("Middleware error:", error)
+      const loginUrl = new URL("/login", request.url)
+      loginUrl.searchParams.set("redirect", pathname)
+      return NextResponse.redirect(loginUrl)
+    }
   }
 
   return NextResponse.next()
 }
 
-function getSecurityHeaders(request: NextRequest): [string, string][] {
-  const isDev = process.env.NODE_ENV !== "production"
-  const host = request.headers.get("host") || ""
-  const isLocalhost = host.includes("localhost") || host.includes("127.0.0.1")
-
-  // Базовые security headers
-  const headers: [string, string][] = [
-    // Защита от XSS
-    ["X-XSS-Protection", "1; mode=block"],
-    // Защита от MIME-sniffing
-    ["X-Content-Type-Options", "nosniff"],
-    // Запрет фреймов (можно ослабить для внешних виджетов)
-    ["X-Frame-Options", "DENY"],
-    // Реферальная политика
-    ["Referrer-Policy", "strict-origin-when-cross-origin"],
-    // Permissions Policy
-    ["Permissions-Policy", "camera=(), microphone=(), geolocation=()"],
-  ]
-
-  // CSP header
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https: blob:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://api.stripe.com https://*.upstash.io",
-    "frame-src 'self' https://js.stripe.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ]
-
-  if (isDev || isLocalhost) {
-    // В разработке разрешаем больше для удобства
-    cspDirectives.push("connect-src 'self' https://api.stripe.com https://*.upstash.io http://localhost:* ws://localhost:*")
-    cspDirectives.push("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-  }
-
-  headers.push(["Content-Security-Policy", cspDirectives.join("; ")])
-
-  // HSTS только в production
-  if (!isDev && !isLocalhost) {
-    headers.push(["Strict-Transport-Security", "max-age=31536000; includeSubDomains"])
-  }
-
-  return headers
-}
-
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/api/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }
