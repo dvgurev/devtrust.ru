@@ -1,51 +1,20 @@
-# Dependencies
+# Зависимости
 node_modules/
-packages/*/node_modules/
-apps/*/node_modules/
+.pnpm-store/
+**/.pnpm-store/
 
-# Build outputs
+# Next.js
 .next/
-dist/
-build/
 out/
 
-# Environment
+# Prisma
+prisma/migrations/*/migration_lock.toml
+
+# Окружение
 .env
-.env.*
-!.env.example
+.env.local
+.env.production
 
-# Database
-*.db
-*.db-journal
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-
-# Runtime data
-pids/
-*.pid
-*.seed
-
-# Coverage
-coverage/
-*.lcov
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
-Desktop.ini
-.DS_Store
-
-# Docker volumes (local)
-docker-compose.override.yml
-
-# Misc
-*.tgz
-.cache/
+# Кэш
+*.tsbuildinfo
+.next/
