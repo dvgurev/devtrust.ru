@@ -2,180 +2,105 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import {
-  CreditCard, Receipt, Download, Check, Clock, AlertCircle,
-  ArrowUpRight, Wallet, Plus, Sparkles
-} from "lucide-react"
+import { AppWindow, ExternalLink, Check, Clock, AlertCircle, ArrowUpRight, Package } from "lucide-react"
 
-export default async function DashboardBillingPage() {
+export default async function DashboardAppsPage() {
   const session = await auth()
-  if (!session?.user || !session.user.id) {
-    redirect("/login")
-  }
+  if (!session?.user?.id) redirect("/login")
 
-  // Заглушки данных — замените на реальные запросы
-  const payments: any[] = []
-  const invoices: any[] = []
-  const totalSpent = 0
-  const activeSubscriptionsCount = 0
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      memberships: {
+        include: {
+          organization: {
+            include: {
+              subscriptions: {
+                include: { plan: { include: { app: true } } },
+              },
+            },
+          },
+        },
+      },
+    },
+  }) as any
+
+  const subscriptions = user?.memberships?.flatMap((m: any) => m.organization?.subscriptions || []) || []
 
   return (
-    <div className="space-y-8">
+    <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 lg:mb-8">
         <div>
-          <h1 className="text-2xl lg:text-4xl font-black text-neutral-900 tracking-tight">
-            Платежи и счета
-          </h1>
-          <p className="text-neutral-500 mt-1">
-            Управляйте оплатой и отслеживайте историю платежей
-          </p>
+          <h1 className="text-2xl lg:text-4xl font-black text-neutral-900 tracking-tight">Мои приложения</h1>
+          <p className="text-neutral-500 text-sm mt-1">Управляйте подписками</p>
         </div>
-        <Link
-          href="/catalog"
+        <Link href="/catalog"
           className="inline-flex items-center gap-2 px-5 py-3 bg-neutral-900 text-white 
-            rounded-full font-bold text-sm hover:bg-neutral-800 transition-all duration-300"
-        >
-          <Plus className="w-4 h-4" />
-          Добавить приложение
-          <ArrowUpRight className="w-4 h-4" />
+            rounded-full font-bold text-sm hover:bg-neutral-800 transition-all">
+          <Package className="w-4 h-4" /> Добавить <ArrowUpRight className="w-4 h-4 hidden sm:block" />
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8">
-          <div className="w-12 h-12 bg-violet-50 rounded-2xl flex items-center justify-center mb-4">
-            <Wallet className="w-6 h-6 text-violet-500" />
-          </div>
-          <div className="text-3xl lg:text-4xl font-black text-neutral-900 mb-1">
-            {totalSpent.toLocaleString("ru")} ₽
-          </div>
-          <div className="text-sm font-medium text-neutral-400">
-            Потрачено всего
-          </div>
+      {subscriptions.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-3xl border border-neutral-100">
+          <AppWindow className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-neutral-900 mb-2">Нет приложений</h3>
+          <p className="text-neutral-500 mb-6">Подпишитесь на приложения из каталога</p>
+          <Link href="/catalog"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white 
+              rounded-full font-bold hover:bg-neutral-800 transition-all">
+            Открыть каталог <ArrowUpRight className="w-4 h-4" />
+          </Link>
         </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+          {subscriptions.map((sub: any) => {
+            const app = sub.plan?.app
+            const daysLeft = sub.currentPeriodEnd
+              ? Math.ceil((new Date(sub.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null
+            const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
+            const isExpired = daysLeft !== null && daysLeft < 0
 
-        <div className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8">
-          <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center mb-4">
-            <CreditCard className="w-6 h-6 text-emerald-500" />
-          </div>
-          <div className="text-3xl lg:text-4xl font-black text-neutral-900 mb-1">
-            {activeSubscriptionsCount}
-          </div>
-          <div className="text-sm font-medium text-neutral-400">
-            Активных подписок
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8">
-          <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center mb-4">
-            <Receipt className="w-6 h-6 text-amber-500" />
-          </div>
-          <div className="text-3xl lg:text-4xl font-black text-neutral-900 mb-1">
-            {invoices.length}
-          </div>
-          <div className="text-sm font-medium text-neutral-400">
-            Счетов
-          </div>
-        </div>
-      </div>
-
-      {/* Payment Methods */}
-      <div className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8">
-        <h2 className="text-xl font-bold text-neutral-900 mb-6 flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-violet-500" />
-          Способы оплаты
-        </h2>
-
-        <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-8 bg-neutral-300 rounded-lg" />
-            <div>
-              <p className="font-bold text-neutral-900">•••• 4242</p>
-              <p className="text-sm text-neutral-500">Истекает 12/28</p>
-            </div>
-          </div>
-          <span className="text-sm font-medium text-green-600 flex items-center gap-1.5">
-            <Check className="w-4 h-4" />
-            Основной
-          </span>
-        </div>
-
-        <button className="mt-4 inline-flex items-center gap-2 px-5 py-3 border-2 border-dashed 
-          border-neutral-200 text-neutral-500 rounded-2xl font-medium text-sm
-          hover:border-neutral-300 hover:text-neutral-700 transition-all duration-300 w-full justify-center">
-          <Plus className="w-4 h-4" />
-          Добавить способ оплаты
-        </button>
-      </div>
-
-      {/* Payment History */}
-      <div className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8">
-        <h2 className="text-xl font-bold text-neutral-900 mb-6 flex items-center gap-2">
-          <Receipt className="w-5 h-5 text-violet-500" />
-          История платежей
-        </h2>
-
-        {payments.length > 0 ? (
-          <div className="divide-y divide-neutral-100">
-            {payments.map((payment: any) => (
-              <div key={payment.id} className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center
-                    ${payment.status === "completed" ? "bg-emerald-50" : "bg-amber-50"}`}>
-                    {payment.status === "completed" ? (
-                      <Check className="w-5 h-5 text-emerald-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-amber-500" />
-                    )}
+            return (
+              <div key={sub.id} className="bg-white rounded-2xl lg:rounded-3xl border border-neutral-100 p-4 lg:p-6
+                hover:shadow-lg transition-all duration-300">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-neutral-100 rounded-xl lg:rounded-2xl 
+                    flex items-center justify-center flex-shrink-0">
+                    <AppWindow className="w-5 h-5 lg:w-6 lg:h-6 text-neutral-500" />
                   </div>
-                  <div>
-                    <p className="font-bold text-neutral-900">{payment.description}</p>
-                    <p className="text-sm text-neutral-500">{payment.date}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-neutral-900 text-sm lg:text-base truncate">{app?.name}</h3>
+                    <p className="text-xs lg:text-sm text-neutral-500">{sub.plan?.name}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-neutral-900">{payment.amount} ₽</p>
-                  <button className="text-sm text-violet-600 hover:text-violet-700 font-medium">
-                    <Download className="w-4 h-4 inline" />
-                  </button>
+
+                <div className="space-y-1.5 mb-4">
+                  {daysLeft !== null && (
+                    <div className="flex items-center gap-1.5 text-xs lg:text-sm">
+                      {isExpired ? (
+                        <><AlertCircle className="w-3.5 h-3.5 text-red-500" /><span className="text-red-600 font-medium">Истекла</span></>
+                      ) : isExpiringSoon ? (
+                        <><Clock className="w-3.5 h-3.5 text-amber-500" /><span className="text-amber-600 font-medium">Через {daysLeft} дн.</span></>
+                      ) : (
+                        <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-neutral-500">Активна</span></>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                <Link href={`/apps/${app?.slug}`}
+                  className="inline-flex items-center gap-1.5 w-full justify-center px-4 py-2.5 
+                    bg-neutral-900 text-white rounded-xl font-medium text-sm hover:bg-neutral-800 transition-all">
+                  Открыть <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Receipt className="w-8 h-8 text-neutral-400" />
-            </div>
-            <p className="text-neutral-500 font-medium">Нет истории платежей</p>
-            <p className="text-sm text-neutral-400 mt-1">
-              Здесь будет отображаться история ваших транзакций
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Need Help */}
-      <div className="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl p-6 lg:p-8 border border-violet-100">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5 text-violet-500" />
-          <h3 className="font-bold text-violet-900">Нужна помощь с оплатой?</h3>
+            )
+          })}
         </div>
-        <p className="text-violet-700 mb-4 leading-relaxed">
-          Если у вас возникли вопросы по оплате или вы хотите изменить тарифный план,
-          свяжитесь с нашей поддержкой.
-        </p>
-        <Link
-          href="/docs/contact"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white 
-            rounded-full font-bold text-sm hover:bg-violet-700 transition-all duration-300"
-        >
-          Связаться с поддержкой
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
-      </div>
+      )}
     </div>
   )
 }

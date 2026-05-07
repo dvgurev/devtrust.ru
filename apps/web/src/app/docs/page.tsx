@@ -1,4 +1,5 @@
-import { BookOpen, FileText, Code, MessageSquare, Users, Settings, ArrowRight } from "lucide-react"
+// apps/web/src/app/docs/page.tsx
+import { BookOpen, FileText, Code, MessageSquare, Users, Settings, ArrowRight, Search } from "lucide-react"
 import Link from "next/link"
 
 export const metadata = {
@@ -9,9 +10,8 @@ export const metadata = {
 export default function DocsPage() {
   const sections = [
     {
-      title: "Начало работы",
-      description: "Быстрый старт с платформой DevTrust",
-      icon: <BookOpen className="w-6 h-6" />,
+      title: "Начало работы", description: "Быстрый старт с платформой",
+      icon: <BookOpen className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "Введение", href: "/docs/getting-started" },
         { name: "Регистрация и настройка", href: "/docs/setup" },
@@ -19,9 +19,8 @@ export default function DocsPage() {
       ],
     },
     {
-      title: "API и интеграции",
-      description: "Документация по API и интеграциям с внешними сервисами",
-      icon: <Code className="w-6 h-6" />,
+      title: "API и интеграции", description: "API и интеграции с сервисами",
+      icon: <Code className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "REST API", href: "/docs/api" },
         { name: "Webhooks", href: "/docs/webhooks" },
@@ -29,9 +28,8 @@ export default function DocsPage() {
       ],
     },
     {
-      title: "Управление аккаунтом",
-      description: "Настройки аккаунта, биллинг и безопасность",
-      icon: <Settings className="w-6 h-6" />,
+      title: "Аккаунт", description: "Настройки, биллинг, безопасность",
+      icon: <Settings className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "Настройки профиля", href: "/docs/account" },
         { name: "Подписки и биллинг", href: "/docs/billing" },
@@ -39,19 +37,17 @@ export default function DocsPage() {
       ],
     },
     {
-      title: "Поддержка",
-      description: "Контакты, FAQ и помощь",
-      icon: <MessageSquare className="w-6 h-6" />,
+      title: "Поддержка", description: "Контакты, FAQ, помощь",
+      icon: <MessageSquare className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "Контакты", href: "/docs/contact" },
-        { name: "Часто задаваемые вопросы", href: "/docs/faq" },
+        { name: "Частые вопросы", href: "/docs/faq" },
         { name: "Сообщество", href: "/docs/community" },
       ],
     },
     {
-      title: "Для разработчиков",
-      description: "Руководства для разработчиков и SDK",
-      icon: <FileText className="w-6 h-6" />,
+      title: "Разработчикам", description: "Руководства, SDK, примеры",
+      icon: <FileText className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "SDK и библиотеки", href: "/docs/sdk" },
         { name: "Примеры кода", href: "/docs/examples" },
@@ -59,9 +55,8 @@ export default function DocsPage() {
       ],
     },
     {
-      title: "Администрирование",
-      description: "Управление организациями и пользователями",
-      icon: <Users className="w-6 h-6" />,
+      title: "Администрирование", description: "Организации, роли, аудит",
+      icon: <Users className="w-5 h-5 lg:w-6 lg:h-6" />,
       links: [
         { name: "Организации", href: "/docs/organizations" },
         { name: "Роли и права", href: "/docs/roles" },
@@ -71,106 +66,74 @@ export default function DocsPage() {
   ]
 
   return (
-    <div className="bg-bg">
+    <div className="min-h-screen bg-[#f5f5f5]">
       {/* Hero */}
-      <section className="border-b-2 border-border py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="font-mono text-xs uppercase tracking-[0.12em] text-accent mb-3">Документация</div>
-            <h1 className="font-display text-4xl md:text-6xl mb-4 text-fg">Документация DevTrust</h1>
-            <p className="text-fg font-mono text-sm">
-              Полное руководство по использованию платформы, API и интеграциям
-            </p>
-            <div className="mt-8">
-              <div className="inline-flex items-center border-2 border-border px-4 py-2 font-mono text-sm text-muted">
-                <span className="mr-2">Быстрый поиск:</span>
-                <input 
-                  type="text" 
-                  placeholder="Введите запрос..." 
-                  className="bg-transparent border-none outline-none text-fg placeholder:text-muted font-mono text-sm"
-                />
-              </div>
-            </div>
+      <div className="bg-neutral-900 text-white pt-20 pb-12 lg:pt-28 lg:pb-16">
+        <div className="max-w-[1200px] mx-auto px-4 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-6 lg:mb-8">
+            <BookOpen className="w-4 h-4 text-violet-400" />
+            <span className="text-sm text-neutral-300">Документация</span>
+          </div>
+          <h1 className="text-3xl lg:text-7xl font-black tracking-tight mb-4">
+            Документация <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-pink-400">DevTrust</span>
+          </h1>
+          <p className="text-neutral-400 text-sm lg:text-lg max-w-xl mx-auto mb-8">
+            Полное руководство по использованию платформы, API и интеграциям
+          </p>
+          <div className="relative max-w-md mx-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <input
+              type="text" placeholder="Поиск в документации..."
+              className="w-full pl-11 pr-4 py-3 lg:py-3.5 bg-white/10 border border-white/20 rounded-2xl
+                text-white placeholder:text-neutral-400 focus:outline-none focus:border-violet-400 transition-all text-sm"
+            />
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Main Content */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sections.map((section, index) => (
-              <div key={index} className="border-2 border-border p-8 hover:border-fg/50 transition-all">
-                <div className="w-12 h-12 border-2 border-fg/20 flex items-center justify-center mb-6">
-                  {section.icon}
-                </div>
-                <h3 className="font-display text-2xl mb-3 text-fg">{section.title}</h3>
-                <p className="text-muted font-mono text-sm mb-6">{section.description}</p>
-                <ul className="space-y-3">
-                  {section.links.map((link: any, linkIndex: number) => (
-                    <li key={linkIndex}>
-                      <Link 
-                        href={link.href} 
-                        className="text-fg hover:text-accent font-mono text-sm flex items-center"
-                      >
-                        {link.name}
-                        <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+      {/* Sections Grid */}
+      <div className="max-w-[1200px] mx-auto px-4 lg:px-8 py-8 lg:py-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+          {sections.map((section, i) => (
+            <div key={i} className="bg-white rounded-2xl lg:rounded-3xl border border-neutral-100 p-4 lg:p-6 hover:shadow-lg transition-all duration-300">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-neutral-100 rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 lg:mb-4">
+                {section.icon}
+              </div>
+              <h3 className="font-bold text-neutral-900 text-sm lg:text-lg mb-1">{section.title}</h3>
+              <p className="text-neutral-500 text-xs lg:text-sm mb-4">{section.description}</p>
+              <ul className="space-y-2">
+                {section.links.map((link, j) => (
+                  <li key={j}>
+                    <Link href={link.href} className="flex items-center gap-1.5 text-xs lg:text-sm font-medium text-violet-600 hover:text-violet-700">
+                      {link.name} <ArrowRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Additional */}
+        <div className="mt-8 lg:mt-12">
+          <h2 className="text-xl lg:text-3xl font-black text-neutral-900 mb-4 lg:mb-6">Дополнительные ресурсы</h2>
+          <div className="grid sm:grid-cols-3 gap-3 lg:gap-4">
+            {[
+              { title: "Блог", desc: "Статьи и обновления", href: "/blog", btn: "Читать" },
+              { title: "Видеоуроки", desc: "Пошаговые руководства", href: "#", btn: "Смотреть" },
+              { title: "GitHub", desc: "SDK и примеры кода", href: "#", btn: "Перейти" },
+            ].map((res, i) => (
+              <div key={i} className="bg-white rounded-2xl lg:rounded-3xl border border-neutral-100 p-4 lg:p-6">
+                <h3 className="font-bold text-neutral-900 text-sm lg:text-lg mb-1">{res.title}</h3>
+                <p className="text-neutral-500 text-xs lg:text-sm mb-4">{res.desc}</p>
+                <Link href={res.href} className="inline-flex items-center gap-1.5 text-xs lg:text-sm font-medium text-violet-600 hover:text-violet-700">
+                  {res.btn} <ArrowRight className="w-3 h-3 lg:w-3.5 lg:h-3.5" />
+                </Link>
               </div>
             ))}
           </div>
-
-          {/* Additional Resources */}
-          <div className="mt-12 border-2 border-border p-8">
-            <h2 className="font-display text-3xl md:text-4xl mb-6 text-fg">Дополнительные ресурсы</h2>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="border-2 border-border p-6">
-                <h3 className="font-display text-xl mb-3 text-fg">Блог разработчиков</h3>
-                <p className="text-muted font-mono text-sm mb-4">
-                  Статьи, обновления и анонсы новых функций от нашей команды.
-                </p>
-                <Link href="/blog" className="text-fg hover:text-accent font-mono text-sm flex items-center">
-                  Читать блог
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </Link>
-              </div>
-              <div className="border-2 border-border p-6">
-                <h3 className="font-display text-xl mb-3 text-fg">Видеоуроки</h3>
-                <p className="text-muted font-mono text-sm mb-4">
-                  Поашаговые видео по использованию платформы и интеграциям.
-                </p>
-                <a 
-                  href="https://youtube.com/c/devtrust" 
-                  className="text-fg hover:text-accent font-mono text-sm flex items-center"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Смотреть на YouTube
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </a>
-              </div>
-              <div className="border-2 border-border p-6">
-                <h3 className="font-display text-xl mb-3 text-fg">GitHub репозитории</h3>
-                <p className="text-muted font-mono text-sm mb-4">
-                  Исходный код SDK, примеры и open-source компоненты.
-                </p>
-                <a 
-                  href="https://github.com/devtrust" 
-                  className="text-fg hover:text-accent font-mono text-sm flex items-center"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Перейти на GitHub
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </a>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }
