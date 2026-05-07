@@ -546,22 +546,20 @@ export function AppHeader() {
                   <UserMenu session={session} />
                 ) : (
                   <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <Link
                       href="/login"
-                      className="rounded-full font-medium"
+                      className="px-5 py-2.5 text-sm font-bold text-neutral-600 hover:text-neutral-900 
+          hover:bg-neutral-100 rounded-full transition-all duration-300"
                     >
                       Войти
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="sm"
+                    </Link>
+                    <Link
                       href="/register"
-                      className="rounded-full font-medium bg-neutral-900 hover:bg-neutral-800"
+                      className="px-5 py-2.5 text-sm font-bold text-white bg-neutral-900 
+          hover:bg-neutral-800 rounded-full transition-all duration-300"
                     >
                       Регистрация
-                    </Button>
+                    </Link>
                   </>
                 )}
               </div>
