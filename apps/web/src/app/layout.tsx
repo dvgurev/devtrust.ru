@@ -1,30 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Poppins, Open_Sans } from "next/font/google";
 import { Provider } from "@/components/providers";
 import { AppHeader, AppFooter } from "@/components/app-header";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const openSans = Open_Sans({
-  variable: "--font-open-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -50,11 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ru"
-      className={`${poppins.variable} ${openSans.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="ru" className="h-full antialiased">
+      <body className="min-h-full flex flex-col font-body bg-bg text-fg">
         <Provider>
           <div className="flex min-h-screen flex-col">
             <AppHeader />

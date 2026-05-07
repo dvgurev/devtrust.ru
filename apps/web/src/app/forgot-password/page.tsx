@@ -5,6 +5,7 @@ import Link from "next/link"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Button, Input } from "@/components/ui/button"
 
 const schema = z.object({
   email: z.string().email("Введите корректный email"),
@@ -16,14 +17,18 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: FormData) => {
     setError(null)
     setMessage(null)
-    
+     
     try {
       const response = await fetch("/api/forgot-password", {
         method: "POST",
@@ -32,12 +37,12 @@ export default function ForgotPasswordPage() {
       })
 
       const result = await response.json()
-      
+       
       if (!response.ok) {
         setError(result.error)
         return
       }
-      
+       
       setMessage(result.message)
     } catch {
       setError("Произошла ошибка")
@@ -45,51 +50,56 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Восстановление пароля</h1>
-        
-        {message && (
-          <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-md text-sm">
-            {message}
-          </div>
-        )}
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-            {error}
-          </div>
-        )}
+    <div className="bg-bg min-h-screen flex items-center justify-center">
+      <div className="max-w-md w-full px-6">
+        <div className="border-2 border-border p-8">
+          <div className="font-mono text-xs uppercase tracking-[0.12em] text-accent mb-3 text-center">Восстановление пароля</div>
+          <h1 className="font-display text-4xl md:text-6xl mb-6 text-fg text-center">Восстановление пароля</h1>
+          
+          {message && (
+            <div className="mb-4 p-4 border-2 border-fg/20 text-fg font-mono text-sm">
+              {message}
+            </div>
+          )}
+          
+          {error && (
+            <div className="mb-4 p-4 border-2 border-accent text-fg font-mono text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              {...register("email")}
-              type="email"
-              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-            )}
-          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <label className="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">
+                Email
+              </label>
+              <Input
+                {...register("email")}
+                type="email"
+                placeholder="you@example.com"
+              />
+              {errors.email && (
+                <p className="mt-2 font-mono text-xs text-accent">{errors.email.message}</p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isSubmitting ? "Отправка..." : "Отправить ссылку"}
-          </button>
-        </form>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              variant="accent"
+              size="lg"
+              className="w-full"
+            >
+              {isSubmitting ? "Отправка..." : "Отправить ссылку"}
+            </Button>
+          </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
-          <Link href="/login" className="text-blue-600 hover:underline">
-            Вернуться к входу
-          </Link>
-        </p>
+          <p className="mt-8 pt-8 border-t-2 border-border text-center">
+            <Link href="/login" className="font-mono text-sm text-fg hover:text-accent transition-colors">
+              Вернуться к входу
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   )

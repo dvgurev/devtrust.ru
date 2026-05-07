@@ -9,7 +9,7 @@ export const metadata = {
 async function getApps(slugs: string[]) {
   return prisma.app.findMany({
     where: { slug: { in: slugs }, status: "ACTIVE" },
-    include: { 
+    include: {
       category: true,
       plans: { orderBy: { price: "asc" } },
     },
@@ -23,14 +23,14 @@ export default async function ComparePage({
 }) {
   const params = await searchParams
   const slugs = params.apps?.split(",").filter(Boolean) || []
-  
+
   if (slugs.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Сравнение приложений</h1>
-          <p className="text-gray-600 mb-4">Выберите приложения для сравнения</p>
-          <Link href="/catalog" className="text-blue-600 hover:underline">
+          <h1 className="font-display text-2xl mb-4 text-fg">Сравнение приложений</h1>
+          <p className="font-mono text-sm text-muted mb-4">Выберите приложения для сравнения</p>
+          <Link href="/catalog" className="font-mono text-xs uppercase tracking-widest text-accent hover:opacity-80">
             Перейти в каталог
           </Link>
         </div>
@@ -42,10 +42,10 @@ export default async function ComparePage({
 
   if (apps.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Приложения не найдены</h1>
-          <Link href="/catalog" className="text-blue-600 hover:underline">
+          <h1 className="font-display text-2xl mb-4 text-fg">Приложения не найдены</h1>
+          <Link href="/catalog" className="font-mono text-xs uppercase tracking-widest text-accent hover:opacity-80">
             Перейти в каталог
           </Link>
         </div>
@@ -54,18 +54,18 @@ export default async function ComparePage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-bg py-8">
       <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8">Сравнение приложений</h1>
+        <h1 className="font-display text-3xl text-fg mb-8">Сравнение приложений</h1>
 
         <div className="overflow-x-auto">
-          <table className="w-full bg-white rounded-lg shadow-sm">
+          <table className="w-full border-2 border-border bg-surface">
             <thead>
               <tr>
-                <th className="p-4 text-left bg-gray-50 w-48">Характеристика</th>
+                <th className="p-4 text-left font-display text-fg border-b-2 border-border w-48">Характеристика</th>
                 {apps.map((app) => (
-                  <th key={app.id} className="p-4 text-left">
-                    <Link href={`/apps/${app.slug}`} className="font-semibold hover:text-blue-600">
+                  <th key={app.id} className="p-4 text-left border-b-2 border-border">
+                    <Link href={`/apps/${app.slug}`} className="font-display font-semibold text-fg hover:text-accent">
                       {app.name}
                     </Link>
                   </th>
@@ -74,49 +74,49 @@ export default async function ComparePage({
             </thead>
             <tbody>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Категория</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Категория</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.category?.name || "—"}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Цена</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Цена</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.isFree ? "Бесплатно" : app.plans[0] ? `от ${app.plans[0].price} ₽/мес` : "—"}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Бесплатное</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Бесплатное</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.isFree ? "✓" : "—"}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Рейтинг</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Рейтинг</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.averageRating.toFixed(1)} / 5
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Отзывов</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Отзывов</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.reviewsCount}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-4 border-t bg-gray-50">Поддомен</td>
+                <td className="p-4 border-b-2 border-border font-mono text-xs uppercase tracking-widest text-muted">Поддомен</td>
                 {apps.map((app) => (
-                  <td key={app.id} className="p-4 border-t">
+                  <td key={app.id} className="p-4 border-b-2 border-border font-mono text-sm text-fg">
                     {app.subdomain ? `${app.subdomain}.devtrust.ru` : "—"}
                   </td>
                 ))}
@@ -126,7 +126,7 @@ export default async function ComparePage({
         </div>
 
         <div className="mt-8">
-          <Link href="/catalog" className="text-blue-600 hover:underline">
+          <Link href="/catalog" className="font-mono text-xs uppercase tracking-widest text-accent hover:opacity-80">
             ← Вернуться в каталог
           </Link>
         </div>

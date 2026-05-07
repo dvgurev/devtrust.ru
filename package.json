@@ -5,13 +5,25 @@
   "description": "Платформа-магазин бизнес-приложений",
   "packageManager": "pnpm@10.33.2",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "lint": "pnpm --filter web lint",
-    "typecheck": "pnpm --filter web typecheck",
-    "build:core": "pnpm --filter @platform/core build"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "build:core": "turbo build --filter=@platform/core"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "@sentry/cli",
+      "sharp",
+      "unrs-resolver"
+    ]
   },
   "devDependencies": {
+    "turbo": "^2.9.9",
     "typescript": "^5.7.0"
   }
 }

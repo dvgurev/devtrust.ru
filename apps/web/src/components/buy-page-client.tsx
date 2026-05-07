@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { motion } from "motion/react"
-import { ArrowLeft, Check, Star, Calendar, Shield, Zap } from "lucide-react"
+import { motion, AnimatePresence } from "motion/react"
+import { ArrowLeft, Check, Star, Calendar, Shield, Zap, Sparkles, ArrowUpRight, ShoppingBag } from "lucide-react"
 import { useState } from "react"
 
 type BillingPeriod = "monthly" | "yearly" | "oneTime"
@@ -40,7 +40,6 @@ export function BuyPageClient({ app, plans, selectedPlan, handleBuy }: BuyPageCl
   const [selectedPlanId, setSelectedPlanId] = useState(selectedPlan.id)
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
   const [loading, setLoading] = useState(false)
-  const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
 
   const currentPlan = plans.find(p => p.id === selectedPlanId) || selectedPlan
 
@@ -58,8 +57,7 @@ export function BuyPageClient({ app, plans, selectedPlan, handleBuy }: BuyPageCl
 
   const getSavings = () => {
     if (billingPeriod === "yearly" && currentPlan.yearlyPrice) {
-      const monthlyTotal = currentPlan.price * 12
-      return monthlyTotal - currentPlan.yearlyPrice
+      return currentPlan.price * 12 - currentPlan.yearlyPrice
     }
     return 0
   }
@@ -75,290 +73,291 @@ export function BuyPageClient({ app, plans, selectedPlan, handleBuy }: BuyPageCl
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-20">
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-        {/* Back */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-8"
-        >
-          <Link
-            href={`/apps/${app.slug}`}
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors"
+    <div className="min-h-screen bg-[#f5f5f5]">
+      {/* Hero Banner */}
+      <div className="bg-neutral-900 text-white pt-24 pb-16 lg:pt-32 lg:pb-20">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-8">
+          {/* Back Link */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Назад к приложению
-          </Link>
-        </motion.div>
+            <Link
+              href={`/apps/${app.slug}`}
+              className="inline-flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Назад к приложению
+            </Link>
+          </motion.div>
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl p-8 mb-6"
-        >
-          <div className="flex items-center gap-6">
-            {app.iconUrl ? (
-              <img src={app.iconUrl} alt={app.name} className="w-20 h-20 rounded-2xl" />
-            ) : (
-              <div className="w-20 h-20 bg-gradient-to-br from-red-400 to-orange-400 rounded-2xl flex items-center justify-center">
-                <span className="text-3xl font-bold text-white">{app.name[0]}</span>
-              </div>
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 mb-2">{app.name}</h1>
-              <p className="text-slate-500 mb-2">{app.description}</p>
-              <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            {/* App Icon */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              {app.iconUrl ? (
+                <img src={app.iconUrl} alt={app.name} className="w-20 h-20 rounded-3xl object-cover" />
+              ) : (
+                <div className="w-20 h-20 bg-gradient-to-br from-violet-400 to-pink-400 
+                  rounded-3xl flex items-center justify-center shadow-2xl shadow-violet-500/20">
+                  <span className="text-3xl font-black text-white">{app.name[0]}</span>
+                </div>
+              )}
+            </motion.div>
+
+            {/* App Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="flex items-center gap-3 mb-2">
                 {app.category && (
-                  <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm">
+                  <span className="px-3 py-1 bg-white/10 text-white rounded-full text-sm font-medium">
                     {app.category.name}
                   </span>
                 )}
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  <span className="text-sm font-medium text-slate-900">{app.averageRating.toFixed(1)}</span>
-                  <span className="text-sm text-slate-500">({app.reviewsCount})</span>
-                </div>
+                <span className="flex items-center gap-1 text-sm text-neutral-400">
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  {app.averageRating.toFixed(1)} ({app.reviewsCount})
+                </span>
               </div>
-            </div>
+              <h1 className="text-3xl lg:text-4xl font-black tracking-tight mb-2">
+                {app.name}
+              </h1>
+              <p className="text-neutral-400 text-lg max-w-xl">{app.description}</p>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
+      </div>
 
-        {/* Billing Period Selector */}
+      {/* Main Content */}
+      <div className="max-w-[800px] mx-auto px-6 lg:px-8 py-8 lg:py-12">
+        {/* Billing Period */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 mb-6"
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8 mb-6"
         >
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Период подписки</h2>
-          
-          <div className="flex gap-3 mb-6">
-            <button
-              onClick={() => setBillingPeriod("monthly")}
-              className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium transition-all ${
-                billingPeriod === "monthly"
-                  ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-            >
-              Ежемесячно
-            </button>
-            <button
-              onClick={() => setBillingPeriod("yearly")}
-              className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium transition-all ${
-                billingPeriod === "yearly"
-                  ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-            >
-              За год
-              {currentPlan.yearlyPrice && (
-                <span className="block text-xs opacity-70">-20%</span>
-              )}
-            </button>
-            <button
-              onClick={() => setBillingPeriod("oneTime")}
-              className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium transition-all ${
-                billingPeriod === "oneTime"
-                  ? "border-red-400 bg-red-50 text-red-600"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
-            >
-              Разово
-              {currentPlan.oneTimePrice && (
-                <span className="block text-xs opacity-70">Полная версия</span>
-              )}
-            </button>
+          <div className="flex items-center gap-2 mb-6">
+            <Calendar className="w-5 h-5 text-violet-500" />
+            <h2 className="text-lg font-bold text-neutral-900">Период оплаты</h2>
           </div>
 
-          <h2 className="text-lg font-bold text-slate-900 mb-4">Выберите тариф</h2>
-          
-          <div className="space-y-3">
-            {plans.map((p) => (
+          <div className="flex bg-neutral-50 rounded-2xl p-1.5">
+            {(["monthly", "yearly", "oneTime"] as const).map((period) => (
               <button
-                key={p.id}
-                onClick={() => setSelectedPlanId(p.id)}
-                className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
-                  selectedPlanId === p.id
-                    ? "border-red-400 bg-red-50/50"
-                    : "border-slate-200 hover:border-slate-300"
-                }`}
+                key={period}
+                onClick={() => setBillingPeriod(period)}
+                className={`flex-1 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-300 relative
+                  ${billingPeriod === period
+                    ? "bg-white text-neutral-900 shadow-sm"
+                    : "text-neutral-500 hover:text-neutral-700"
+                  }`}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedPlanId === p.id ? "border-red-400 bg-red-400" : "border-slate-300"
-                    }`}>
-                      {selectedPlanId === p.id && (
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">{p.name}</p>
-                      <p className="text-sm text-slate-500">
-                        {billingPeriod === "monthly" && "Ежемесячная оплата"}
-                        {billingPeriod === "yearly" && "Оплата за год"}
-                        {billingPeriod === "oneTime" && "Единоразовая оплата"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-slate-900">{getPrice(p)} ₽</p>
-                    <p className="text-sm text-slate-500">{getPeriodLabel()}</p>
-                  </div>
-                </div>
-                {Boolean(p.features && Array.isArray(p.features) && (p.features as string[]).length > 0) && (
-                  <div className="pl-9 space-y-1">
-                    {(expandedPlan === p.id ? (p.features as string[]) : (p.features as string[]).slice(0, 3)).map((feature, i) => (
-                      <div key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                        <Check className="w-3 h-3 text-emerald-500 flex-shrink-0" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                    {(p.features as string[]).length > 3 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setExpandedPlan(expandedPlan === p.id ? null : p.id)
-                        }}
-                        className="text-xs text-red-500 hover:text-red-600 font-medium"
-                      >
-                        {expandedPlan === p.id ? "Скрыть" : `+ ещё ${(p.features as string[]).length - 3} возможностей`}
-                      </button>
-                    )}
-                  </div>
+                {period === "monthly" && "Ежемесячно"}
+                {period === "yearly" && "За год"}
+                {period === "oneTime" && "Навсегда"}
+                {period === "yearly" && (
+                  <span className="absolute -top-2 -right-1 px-2 py-0.5 bg-green-500 text-white 
+                    text-[10px] font-bold rounded-full">-20%</span>
                 )}
               </button>
             ))}
           </div>
         </motion.div>
 
-        {/* Selected Plan Description */}
-        {currentPlan.description && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 mb-6"
-          >
-            <h3 className="font-semibold text-slate-900 mb-4">{currentPlan.name}</h3>
-            <p className="text-slate-600 mb-4">{currentPlan.description}</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Boolean(currentPlan.features && Array.isArray(currentPlan.features)) && (currentPlan.features as string[]).map((feature, i) => (
-                <div key={i} className="flex items-center gap-3 text-slate-600">
-                  <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <span className="text-sm">{feature}</span>
-                </div>
-              ))}
-              <div className="flex items-center gap-3 text-slate-600">
-                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-emerald-500" />
-                </div>
-                <span className="text-sm">Техническая поддержка</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-emerald-500" />
-                </div>
-                <span className="text-sm">Ежемесячные обновления</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Plans */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <ShoppingBag className="w-5 h-5 text-violet-500" />
+            <h2 className="text-lg font-bold text-neutral-900">Выберите тариф</h2>
+          </div>
 
-        {/* Compare Plans */}
+          <div className="space-y-3">
+            {plans.map((plan) => {
+              const isSelected = selectedPlanId === plan.id
+              const features = (plan.features as string[]) || []
+
+              return (
+                <button
+                  key={plan.id}
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`w-full text-left p-5 rounded-2xl border-2 transition-all duration-300
+                    ${isSelected
+                      ? "border-violet-500 bg-violet-50/50"
+                      : "border-neutral-100 hover:border-neutral-200"
+                    }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                        ${isSelected ? "border-violet-500 bg-violet-500" : "border-neutral-300"}`}
+                      >
+                        {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-neutral-900">{plan.name}</p>
+                        {features.length > 0 && (
+                          <p className="text-sm text-neutral-500 mt-1">
+                            {features.slice(0, 3).join(" · ")}
+                            {features.length > 3 && ` + ещё ${features.length - 3}`}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-2xl font-black text-neutral-900">
+                        {getPrice(plan).toLocaleString()} ₽
+                      </p>
+                      <p className="text-sm text-neutral-400">{getPeriodLabel()}</p>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        {/* Features */}
+        {currentPlan.features && Array.isArray(currentPlan.features) &&
+          (currentPlan.features as string[]).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8 mb-6"
+            >
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles className="w-5 h-5 text-violet-500" />
+                <h3 className="text-lg font-bold text-neutral-900">
+                  Возможности тарифа «{currentPlan.name}»
+                </h3>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                {(currentPlan.features as string[]).map((feature, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 bg-neutral-50 rounded-2xl">
+                    <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-green-600" />
+                    </div>
+                    <span className="text-sm text-neutral-700 font-medium">{feature}</span>
+                  </div>
+                ))}
+                <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-2xl">
+                  <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Shield className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <span className="text-sm text-neutral-700 font-medium">Техническая поддержка</span>
+                </div>
+                <div className="flex items-start gap-3 p-3 bg-neutral-50 rounded-2xl">
+                  <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Calendar className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <span className="text-sm text-neutral-700 font-medium">Ежемесячные обновления</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+        {/* Compare Plans (if multiple) */}
         {plans.length > 1 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 mb-6"
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-3xl border border-neutral-100 p-6 lg:p-8 mb-6"
           >
-            <h3 className="font-semibold text-slate-900 mb-4">Сравнение тарифов</h3>
+            <h3 className="font-bold text-neutral-900 mb-4">Сравнение тарифов</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 text-sm font-medium text-slate-500">Возможность</th>
+                  <tr className="border-b border-neutral-100">
+                    <th className="text-left py-3 text-sm font-medium text-neutral-400">Возможность</th>
                     {plans.map(p => (
-                      <th key={p.id} className={`text-center py-3 text-sm font-medium ${selectedPlanId === p.id ? "text-red-500" : "text-slate-500"}`}>
+                      <th key={p.id} className={`text-center py-3 text-sm font-bold 
+                        ${selectedPlanId === p.id ? "text-violet-600" : "text-neutral-400"}`}>
                         {p.name}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {(() => {
-                    const allFeatures = new Set<string>()
-                    plans.forEach(p => {
-                      const feats = p.features as string[] | null
-                      if (feats && Array.isArray(feats)) {
-                        feats.forEach(f => allFeatures.add(f))
-                      }
-                    })
-                    return Array.from(allFeatures).slice(0, 8).map((feature) => (
-                      <tr key={feature} className="border-b border-slate-100">
-                        <td className="py-3 text-sm text-slate-600">{feature}</td>
+                  {Array.from(new Set(plans.flatMap(p => (p.features as string[]) || [])))
+                    .slice(0, 8)
+                    .map((feature) => (
+                      <tr key={feature} className="border-b border-neutral-50">
+                        <td className="py-3 text-sm text-neutral-600">{feature}</td>
                         {plans.map(p => {
-                          const feats = p.features as string[] | null
-                          const hasFeature = feats && Array.isArray(feats) && feats.includes(feature)
+                          const feats = (p.features as string[]) || []
                           return (
                             <td key={p.id} className="text-center py-3">
-                              {hasFeature ? (
-                                <Check className="w-5 h-5 text-emerald-500 mx-auto" />
+                              {feats.includes(feature) ? (
+                                <Check className="w-5 h-5 text-green-500 mx-auto" />
                               ) : (
-                                <div className="w-5 h-5 rounded-full border border-slate-200 mx-auto" />
+                                <span className="text-neutral-300">—</span>
                               )}
                             </td>
                           )
                         })}
                       </tr>
                     ))
-                  })()}
+                  }
                 </tbody>
               </table>
             </div>
           </motion.div>
         )}
 
-        {/* Submit */}
+        {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.6 }}
         >
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-red-400 to-orange-400 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-red-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full px-8 py-5 bg-neutral-900 text-white rounded-2xl font-bold text-lg
+              hover:bg-neutral-800 hover:scale-[1.02] transition-all duration-300
+              disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+              shadow-2xl shadow-neutral-900/10 flex items-center justify-center gap-3 group"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <>
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Перенаправление...
-              </span>
+              </>
             ) : (
               <>
-                Купить за {getPrice(currentPlan)} ₽{getPeriodLabel()}
+                <span>Оплатить {getPrice(currentPlan).toLocaleString()} ₽{getPeriodLabel()}</span>
+                <ArrowUpRight className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 {billingPeriod === "yearly" && getSavings() > 0 && (
-                  <span className="block text-sm font-normal opacity-80">
-                    Экономия {getSavings()} ₽ в год
+                  <span className="text-sm font-normal text-green-400 ml-auto">
+                    Экономия {getSavings().toLocaleString()} ₽/год
                   </span>
                 )}
                 {billingPeriod === "oneTime" && (
-                  <span className="block text-sm font-normal opacity-80">
+                  <span className="text-sm font-normal text-violet-400 ml-auto">
                     Пожизненный доступ
                   </span>
                 )}
               </>
             )}
           </button>
-          <p className="text-center text-sm text-slate-500 mt-4">
-            Нажимая кнопку, вы соглашаетесь с условиями использования
+
+          <p className="text-center text-sm text-neutral-400 mt-4">
+            Оплата безопасна. Данные хранятся в РФ.
           </p>
         </motion.div>
       </div>

@@ -1,0 +1,10 @@
+{
+  "extends": "../../packages/config-typescript/react-library.json",
+  "include": ["./src/**/*"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true
+  }
+}
+

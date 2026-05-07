@@ -3,37 +3,41 @@ import { cn } from "@/lib/utils"
 import type { ButtonHTMLAttributes, InputHTMLAttributes, TextareaHTMLAttributes, LabelHTMLAttributes, SelectHTMLAttributes } from "react"
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-  size?: "default" | "sm" | "lg" | "icon"
+  variant?: "default" | "accent" | "ghost"
+  size?: "sm" | "md" | "lg"
+  href?: string
 }
 
 export function Button({
   className,
   variant = "default",
-  size = "default",
+  size = "md",
+  href,
   ...props
 }: ButtonProps) {
-  const baseStyles = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50"
+  const base = "font-mono text-xs uppercase tracking-widest border-2 inline-flex items-center justify-center cursor-pointer no-underline font-medium transition-all duration-200 hover:no-underline active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
 
   const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    destructive: "bg-red-600 text-white hover:bg-red-700",
-    outline: "border border-gray-300 bg-white hover:bg-gray-50",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
-    ghost: "hover:bg-gray-100",
-    link: "text-blue-600 underline-offset-4 hover:underline",
+    default: "border-border bg-surface text-fg hover:bg-fg hover:text-bg hover:border-fg",
+    accent: "border-accent bg-accent text-bg hover:bg-accent/90 hover:border-accent",
+    ghost: "border-transparent text-muted hover:text-fg hover:border-fg"
   }
 
   const sizes = {
-    default: "h-10 px-4 py-2",
-    sm: "h-9 rounded-md px-3",
-    lg: "h-11 rounded-md px-8",
-    icon: "h-10 w-10",
+    sm: "px-4 py-1.5 text-xs",
+    md: "px-6 py-3",
+    lg: "px-8 py-4 text-sm"
+  }
+
+  const classes = cn(base, variants[variant], sizes[size], className)
+
+  if (href) {
+    return <a href={href} className={classes} {...props as any}>{props.children}</a>
   }
 
   return (
     <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
+      className={classes}
       {...props}
     />
   )
@@ -45,7 +49,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputHTMLAttributes<HTML
       <input
         type={type}
         className={cn(
-          "flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+          "font-mono text-sm border-2 border-border bg-surface text-fg placeholder:text-muted focus:outline-none focus:border-accent px-4 py-3 w-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
           className
         )}
         ref={ref}
@@ -105,3 +109,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectHTMLAttributes<H
   }
 )
 Select.displayName = "Select"
+
+// 👇 ЭКСПОРТ ВСЕХ КОМПОНЕНТОВ (можно не писать, если уже использовали export перед каждым)
+// Но для ясности и порядка можно добавить:
+// export { Button, Input, Textarea, Label, Select }

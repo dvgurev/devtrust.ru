@@ -6,6 +6,7 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
+import { Button, Input } from "@/components/ui/button"
 
 const schema = z.object({
   password: z.string().min(8, "Пароль должен быть минимум 8 символов"),
@@ -24,7 +25,11 @@ function ResetPasswordForm() {
   
   const [error, setError] = useState<string | null>(null)
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
@@ -39,7 +44,7 @@ function ResetPasswordForm() {
       })
 
       const result = await response.json()
-      
+       
       if (!response.ok) {
         setError(result.error)
         return
@@ -53,60 +58,65 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Ссылка недействительна</p>
+      <div className="bg-bg min-h-screen flex items-center justify-center">
+        <p className="font-mono text-sm text-muted">Ссылка недействительна</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Новый пароль</h1>
-        
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-            {error}
-          </div>
-        )}
+    <div className="bg-bg min-h-screen flex items-center justify-center">
+      <div className="max-w-md w-full px-6">
+        <div className="border-2 border-border p-8">
+          <div className="font-mono text-xs uppercase tracking-[0.12em] text-accent mb-3 text-center">Новый пароль</div>
+          <h1 className="font-display text-4xl md:text-6xl mb-6 text-fg text-center">Установите новый пароль</h1>
+          
+          {error && (
+            <div className="mb-4 p-4 border-2 border-accent text-fg font-mono text-sm">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Новый пароль
-            </label>
-            <input
-              {...register("password")}
-              type="password"
-              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-            )}
-          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <label className="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">
+                Новый пароль
+              </label>
+              <Input
+                {...register("password")}
+                type="password"
+                placeholder="Минимум 8 символов"
+              />
+              {errors.password && (
+                <p className="mt-2 font-mono text-xs text-accent">{errors.password.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Подтвердите пароль
-            </label>
-            <input
-              {...register("confirmPassword")}
-              type="password"
-              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-            )}
-          </div>
+            <div>
+              <label className="font-mono text-xs uppercase tracking-widest text-muted mb-2 block">
+                Подтвердите пароль
+              </label>
+              <Input
+                {...register("confirmPassword")}
+                type="password"
+                placeholder="Повторите пароль"
+              />
+              {errors.confirmPassword && (
+                <p className="mt-2 font-mono text-xs text-accent">{errors.confirmPassword.message}</p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isSubmitting ? "Сохранение..." : "Сохранить пароль"}
-          </button>
-        </form>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              variant="accent"
+              size="lg"
+              className="w-full"
+            >
+              {isSubmitting ? "Сохранение..." : "Сохранить пароль"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   )
@@ -116,7 +126,7 @@ import { Suspense } from "react"
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div>Загрузка...</div>}>
+    <Suspense fallback={<div className="bg-bg min-h-screen flex items-center justify-center"><span className="font-mono text-sm text-muted">Загрузка...</span></div>}>
       <ResetPasswordForm />
     </Suspense>
   )

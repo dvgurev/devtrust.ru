@@ -1,8 +1,6 @@
+// apps/[slug]/page.tsx
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
-import Link from "next/link"
-import { Star, Download, ExternalLink, Check, Clock, Building2, ArrowRight, ArrowLeft, Filter, Zap, MessageSquare, Calendar, ChevronRight } from "lucide-react"
-import { ReviewForm } from "@/components/review-form"
 import { Metadata } from "next"
 import { auth } from "@/lib/auth"
 import { AppPageClient } from "@/components/app-page-client"
@@ -11,9 +9,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const app = await prisma.app.findUnique({
     where: { slug },
-    include: { category: true },
+    select: { name: true, description: true, iconUrl: true, slug: true },
   })
+
   if (!app) return { title: "Приложение не найдено" }
+
   return {
     title: `${app.name} — DevTrust`,
     description: app.description || undefined,
@@ -27,8 +27,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-async function getApp(slug: string) {
-  return prisma.app.findUnique({
+export default async function AppPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+
+  // Единый запрос всех данных
+  const app = await prisma.app.findUnique({
     where: { slug },
     include: {
       category: true,
@@ -43,44 +46,48 @@ async function getApp(slug: string) {
       },
     },
   })
-}
 
-async function getUserReview(appId: string) {
-  const session = await auth()
-  if (!session?.user?.id) return null
-  return prisma.review.findFirst({
-    where: { userId: session.user.id, appId },
-  })
-}
-
-async function getRatingDistribution(appId: string) {
-  const reviews = await prisma.review.findMany({
-    where: { appId, isPublished: true },
-    select: { rating: true },
-  })
-  const distribution = [5, 4, 3, 2, 1].map((r) => ({
-    rating: r,
-    count: reviews.filter((rev) => rev.rating === r).length,
-  }))
-  const total = reviews.length
-  return { distribution, total }
-}
-
-export default async function AppPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const app = await getApp(slug)
-  
   if (!app) {
     notFound()
   }
 
-  const userReview = await getUserReview(app.id)
-  const { distribution, total: totalReviews } = await getRatingDistribution(app.id)
+  // Получаем отзыв пользователя и распределение рейтинга
+  const session = await auth()
+  let userReview = null
+  let distribution: { rating: number; count: number }[] = []
+  let totalReviews = 0
+
+  if (session?.user?.id) {
+    const review = await prisma.review.findFirst({
+      where: { userId: session.user.id, appId: app.id },
+    })
+    if (review) {
+      userReview = { id: review.id, rating: review.rating, text: review.text }
+    }
+  }
+
+  const allRatings = await prisma.review.findMany({
+    where: { appId: app.id, isPublished: true },
+    select: { rating: true },
+  })
+
+  distribution = [5, 4, 3, 2, 1].map((r) => ({
+    rating: r,
+    count: allRatings.filter((rev) => rev.rating === r).length,
+  }))
+  totalReviews = allRatings.length
+
+  // Сериализация данных
+  const serializedApp = JSON.parse(JSON.stringify({
+    ...app,
+    averageRating: Number(app.averageRating),
+    plans: app.plans.map(p => ({ ...p, price: Number(p.price) })),
+  }))
 
   return (
     <AppPageClient
-      app={app}
-      userReview={userReview ? { id: userReview.id, rating: userReview.rating, text: userReview.text } : null}
+      app={serializedApp}
+      userReview={userReview}
       distribution={distribution}
       totalReviews={totalReviews}
     />
