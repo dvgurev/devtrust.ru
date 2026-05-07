@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>DevTrust — единая платформа бизнес-приложений по подписке</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            scroll-behavior: smooth;
+            transition: background-color 0.3s ease, color 0.2s ease;
+        }
+
+        /* ========== ТЕМНАЯ ТЕМА (по умолчанию) ========== */
+        body.dark {
+            --bg-deep: #050A14;
+            --bg-surface: #0E1322;
+            --bg-elevated: #171E2F;
+            --bg-card: #0E1322;
+            --border-subtle: #252E42;
+            --accent-primary: #2D6AFF;
+            --accent-glow: rgba(45, 106, 255, 0.3);
+            --text-primary: #F0F4FF;
+            --text-secondary: #A3B3D6;
+            --text-muted: #69759E;
+            --success: #0CCE6B;
+            --warning: #FFB347;
+            --danger: #FF4D6D;
+            --hero-gradient: linear-gradient(135deg, #0A1020, #060B18);
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+        }
+
+        /* ========== СВЕТЛАЯ ТЕМА ========== */
+        body.light {
+            --bg-deep: #F5F7FC;
+            --bg-surface: #FFFFFF;
+            --bg-elevated: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --border-subtle: #E2E8F0;
+            --accent-primary: #2D6AFF;
+            --accent-glow: rgba(45, 106, 255, 0.15);
+            --text-primary: #1E293B;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --hero-gradient: linear-gradient(135deg, #F1F5F9, #FFFFFF);
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+        }
+
+        /* общие переменные */
+        body {
+            --border-subtle: var(--border-subtle);
+        }
+
+        .glass-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 28px;
+            transition: all 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+
+        /* skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #E2E8F0 25%, #CBD5E1 50%, #E2E8F0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s infinite;
+            border-radius: 16px;
+        }
+        body.dark .skeleton {
+            background: linear-gradient(90deg, #1A2135 25%, #272F48 50%, #1A2135 75%);
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        body.dark ::-webkit-scrollbar-track { background: #0E1322; }
+        body.light ::-webkit-scrollbar-track { background: #E2E8F0; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 8px; }
+
+        button, .btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            transition: opacity 0.3s ease;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ========== НАВИГАЦИЯ С БУРГЕРОМ ========== */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1001;
+        }
+
+        /* десктопное меню */
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* бургер-иконка (скрыта на десктопе) */
+        .burger-menu {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            background: transparent;
+            border: none;
+        }
+
+        .burger-menu span {
+            width: 100%;
+            height: 2.5px;
+            background-color: var(--text-primary);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        /* мобильное меню (выдвижное) */
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 320px;
+            height: 100vh;
+            background: var(--bg-elevated);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-subtle);
+            z-index: 1000;
+            padding: 100px 28px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            transition: right 0.3s ease-in-out;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+        }
+
+        .mobile-nav.active {
+            right: 0;
+        }
+
+        .mobile-nav a, .mobile-nav button {
+            width: 100%;
+            text-align: left;
+            font-size: 1.2rem;
+            padding: 12px 0;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .mobile-nav a:hover, .mobile-nav button:hover {
+            color: var(--accent-primary);
+        }
+
+        .mobile-nav .theme-toggle-mobile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 4px 12px rgba(45, 106, 255, 0.3);
+            font-size: 0.9rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 40px;
+            padding: 6px 14px;
+            display: flex;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hero {
+            padding: 60px 0 50px;
+            text-align: center;
+            background: var(--hero-gradient);
+            border-radius: 48px;
+            margin: 24px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(45, 106, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            color: var(--accent-primary);
+            margin-bottom: 20px;
+            border: 1px solid rgba(45, 106, 255, 0.3);
+        }
+
+        h1 {
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            border-radius: 28px;
+            padding: 24px;
+            transition: all 0.3s;
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--card-shadow);
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-primary);
+        }
+
+        .app-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(145deg, rgba(45, 106, 255, 0.15), rgba(45, 106, 255, 0.05));
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 18px;
+            color: var(--accent-primary);
+        }
+
+        .price-tag {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--accent-primary);
+        }
+
+        /* modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-elevated);
+            border-radius: 32px;
+            max-width: 500px;
+            width: 90%;
+            padding: 28px 24px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.2s ease;
+            margin: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-top: 12px;
+        }
+
+        .skeleton-row {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .skeleton-card {
+            width: 100%;
+            max-width: 280px;
+            height: 280px;
+            border-radius: 28px;
+            background: var(--bg-surface);
+            opacity: 0.6;
+        }
+
+        .benefit-card {
+            background: var(--bg-surface);
+            border-radius: 32px;
+            margin: 48px 0;
+            padding: 40px 24px;
+            text-align: center;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .footer {
+            margin-top: 60px;
+            border-top: 1px solid var(--border-subtle);
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 16px;
+            }
+            .navbar {
+                padding: 16px 0;
+            }
+            /* скрываем десктопное меню */
+            .nav-links {
+                display: none;
+            }
+            .burger-menu {
+                display: flex;
+            }
+            .hero {
+                padding: 36px 16px;
+                margin: 16px 0;
+            }
+            .catalog-grid {
+                gap: 16px;
+                grid-template-columns: 1fr;
+            }
+            .benefit-card {
+                padding: 28px 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .btn-primary, .btn-outline {
+                padding: 6px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96);}
+            to { opacity: 1; transform: scale(1);}
+        }
+    </style>
+</head>
+<body class="dark">
+<div class="overlay" id="mobileOverlay"></div>
+<div class="mobile-nav" id="mobileNav">
+    <a href="#">Каталог</a>
+    <a href="#">Блог</a>
+    <a href="#">Документация</a>
+    <div class="theme-toggle-mobile">
+        <span><i class="fas fa-palette"></i> Тема оформления</span>
+        <button class="btn-outline" id="mobileThemeBtn" style="padding: 6px 16px; width: auto;">Светлая</button>
+    </div>
+    <button id="mobileLoginBtn">Вход</button>
+    <button id="mobileRegBtn" class="btn-primary" style="background: var(--accent-primary);">Регистрация</button>
+</div>
+
+<div class="container">
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i> DevTrust
+        </div>
+        <div class="nav-links">
+            <a href="#">Каталог</a>
+            <a href="#">Блог</a>
+            <a href="#">Документация</a>
+            <div class="theme-toggle" id="themeToggleBtn">
+                <i class="fas fa-sun"></i>
+                <i class="fas fa-moon"></i>
+                <span style="font-size: 0.8rem;">Тема</span>
+            </div>
+            <button class="btn-outline" id="openLoginModalBtn">Вход</button>
+            <button class="btn-primary" id="openRegModalBtn">Регистрация</button>
+        </div>
+        <button class="burger-menu" id="burgerBtn">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </nav>
+
+    <section class="hero">
+        <div class="badge"><i class="fas fa-rocket"></i> SaaS Marketplace 2026</div>
+        <h1>Единая экосистема<br> бизнес-приложений</h1>
+        <p style="font-size: clamp(1rem, 4vw, 1.2rem); color: var(--text-secondary); max-width: 640px; margin: 20px auto;">Управляйте подписками, доступом и финансами в одном окне. Безопасная платформа для вашего бизнеса.</p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 28px;">
+            <button class="btn-primary" id="demoCatalogBtn">Найти приложение →</button>
+            <button class="btn-outline" id="showOfferModalBtn">Как это работает</button>
+        </div>
+    </section>
+
+    <div id="skeletonLoader">
+        <div class="skeleton-row" style="margin-top: 20px; justify-content: center;">
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+            <div class="skeleton-card skeleton"></div>
+        </div>
+    </div>
+
+    <div id="catalogContainer" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 20px; flex-wrap: wrap; gap: 12px;">
+            <h2><i class="fas fa-store"></i> Популярные приложения</h2>
+            <a href="#" style="color: var(--accent-primary); font-size: 0.9rem;">весь каталог →</a>
+        </div>
+        <div class="catalog-grid" id="appsGrid"></div>
+    </div>
+
+    <div class="benefit-card">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 2.2rem; color: var(--accent-primary); margin-bottom: 16px; display: inline-block;"></i>
+        <h3 style="margin-bottom: 8px;">Централизованный биллинг & SSO</h3>
+        <p style="max-width: 600px; margin: 0 auto; color: var(--text-secondary);">Один счёт, единый контроль доступа и безопасность корпоративного уровня.</p>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p>© 2026 DevTrust — платформа бизнес-приложений по подписке</p>
+        <p style="font-size: 0.75rem; margin-top: 8px;"><i class="fas fa-lock"></i> SOC2 Type II | GDPR Ready</p>
+    </div>
+</footer>
+
+<!-- Модалки -->
+<div id="loginModal" class="modal">
+    <div class="modal-overlay" style="position: absolute; width:100%; height:100%;" onclick="closeModals()"></div>
+    <div class="modal-content" style="position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3>Войти в DevTrust</h3>
+            <i class="fas fa-times" style="cursor: pointer; font-size: 1.3rem;" onclick="closeModals()"></i>
+        </div>
+        <input type="email" placeholder="Рабочая почта" id="loginEmail">
+        <input type="password" placeholder="Пароль" id="loginPass">
+        <button class="btn-primary" style="width:100%; margin-top: 24px;" id="doLoginBtn">Войти</button>
+        <p style="margin-top: 18px; font-size: 0.85rem; text-align:center;">Нет аккаунта? <a href="#" id="switchToReg" style="color:var(--accent-primary);">Создать</a></p>
+    </div>
+</div>
+
+<div id="regModal" class="modal">
+    <div class="modal-overlay" style="position: absolute; width:100%; height:100%;" onclick="closeModals()"></div>
+    <div class="modal-content" style="position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h3>Регистрация</h3>
+            <i class="fas fa-times" style="cursor: pointer; font-size: 1.3rem;" onclick="closeModals()"></i>
+        </div>
+        <input type="text" placeholder="Имя и фамилия" id="regName">
+        <input type="email" placeholder="Email" id="regEmail">
+        <input type="password" placeholder="Пароль" id="regPass">
+        <button class="btn-primary" style="width:100%; margin-top: 24px;" id="doRegBtn">Создать аккаунт</button>
+        <p style="margin-top: 18px; font-size: 0.85rem; text-align:center;">Уже есть аккаунт? <a href="#" id="switchToLogin" style="color:var(--accent-primary);">Войти</a></p>
+    </div>
+</div>
+
+<div id="offerModal" class="modal">
+    <div class="modal-overlay" style="position: absolute; width:100%; height:100%;" onclick="closeModals()"></div>
+    <div class="modal-content" style="position: relative;">
+        <div style="display: flex; justify-content: space-between;">
+            <h3><i class="fas fa-crown"></i> Подписка Enterprise</h3>
+            <i class="fas fa-times" style="cursor: pointer;" onclick="closeModals()"></i>
+        </div>
+        <p style="margin: 20px 0;">Единый платёж за все приложения. Управляйте доступом сотрудников, получите расширенную аналитику и приоритетную поддержку. Начните 14-дневный триал!</p>
+        <button class="btn-primary" style="width:100%;" onclick="alert('Демо: вы выбрали пробный период в DevTrust')">Активировать демо</button>
+    </div>
+</div>
+
+<script>
+    // Каталог моков
+    const appsMock = [
+        { id: 1, name: "CRM Pro", category: "CRM", price: "$29/мес", icon: "fa-chart-line", rating: 4.8, desc: "Управление клиентами и воронками" },
+        { id: 2, name: "DocFlow", category: "Документы", price: "$15/мес", icon: "fa-file-signature", rating: 4.5, desc: "Электронный документооборот" },
+        { id: 3, name: "HR Buddy", category: "HR", price: "$39/мес", icon: "fa-users", rating: 4.9, desc: "Автоматизация HR процессов" },
+        { id: 4, name: "Analytics360", category: "Аналитика", price: "$49/мес", icon: "fa-chart-pie", rating: 4.7, desc: "BI-дашборды и AI-прогнозы" },
+    ];
+
+    function simulateLoading() {
+        const skeletonDiv = document.getElementById('skeletonLoader');
+        const catalogDiv = document.getElementById('catalogContainer');
+        skeletonDiv.style.display = 'block';
+        catalogDiv.style.display = 'none';
+        setTimeout(() => {
+            skeletonDiv.style.display = 'none';
+            catalogDiv.style.display = 'block';
+            renderApps();
+        }, 1300);
+    }
+
+    function renderApps() {
+        const grid = document.getElementById('appsGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        appsMock.forEach(app => {
+            const card = document.createElement('div');
+            card.className = 'app-card';
+            card.innerHTML = `
+                <div class="app-icon"><i class="fas ${app.icon}"></i></div>
+                <div style="display:flex; justify-content: space-between; align-items: baseline; flex-wrap:wrap; gap:8px;">
+                    <h3 style="font-size: 1.25rem;">${app.name}</h3>
+                    <span class="price-tag">${app.price}</span>
+                </div>
+                <p style="color: var(--text-secondary); margin: 12px 0;">${app.desc}</p>
+                <div style="display: flex; gap: 12px; margin-top: 18px;">
+                    <span style="background: rgba(45,106,255,0.1); padding: 4px 10px; border-radius: 40px; font-size: 0.75rem;"><i class="fas fa-star" style="color:#FFB347;"></i> ${app.rating}</span>
+                    <button class="btn-outline subscribeBtn" data-app="${app.name}" style="padding: 6px 12px; font-size: 0.8rem;">Подключить →</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        document.querySelectorAll('.subscribeBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const appName = btn.getAttribute('data-app');
+                alert(`Демо подписки на ${appName}: после оплаты через Stripe будет открыт доступ.`);
+            });
+        });
+    }
+
+    // Модалки
+    const loginModal = document.getElementById('loginModal');
+    const regModal = document.getElementById('regModal');
+    const offerModal = document.getElementById('offerModal');
+    function closeModals() {
+        loginModal.classList.remove('active');
+        regModal.classList.remove('active');
+        offerModal.classList.remove('active');
+    }
+    window.closeModals = closeModals;
+
+    document.getElementById('openLoginModalBtn')?.addEventListener('click', () => { closeModals(); loginModal.classList.add('active'); });
+    document.getElementById('openRegModalBtn')?.addEventListener('click', () => { closeModals(); regModal.classList.add('active'); });
+    document.getElementById('showOfferModalBtn')?.addEventListener('click', () => { closeModals(); offerModal.classList.add('active'); });
+    document.getElementById('demoCatalogBtn')?.addEventListener('click', () => {
+        document.getElementById('catalogContainer')?.scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('switchToReg')?.addEventListener('click', (e) => { e.preventDefault(); closeModals(); regModal.classList.add('active'); });
+    document.getElementById('switchToLogin')?.addEventListener('click', (e) => { e.preventDefault(); closeModals(); loginModal.classList.add('active'); });
+
+    document.getElementById('doLoginBtn')?.addEventListener('click', () => {
+        alert(`Добро пожаловать! Вы вошли в DevTrust.`);
+        closeModals();
+    });
+    document.getElementById('doRegBtn')?.addEventListener('click', () => {
+        alert(`Аккаунт создан! Проверьте почту.`);
+        closeModals();
+    });
+
+    // Тема
+    const body = document.body;
+    function setTheme(theme) {
+        if(theme === 'light') {
+            body.classList.remove('dark');
+            body.classList.add('light');
+            localStorage.setItem('devtrust-theme', 'light');
+        } else {
+            body.classList.remove('light');
+            body.classList.add('dark');
+            localStorage.setItem('devtrust-theme', 'dark');
+        }
+        updateMobileThemeBtnText();
+    }
+    function updateMobileThemeBtnText() {
+        const mobileBtn = document.getElementById('mobileThemeBtn');
+        if(mobileBtn) {
+            mobileBtn.textContent = body.classList.contains('dark') ? 'Светлая' : 'Тёмная';
+        }
+    }
+    const savedTheme = localStorage.getItem('devtrust-theme');
+    if(savedTheme === 'light') body.classList.add('light');
+    else body.classList.add('dark');
+    updateMobileThemeBtnText();
+
+    document.getElementById('themeToggleBtn')?.addEventListener('click', () => {
+        setTheme(body.classList.contains('dark') ? 'light' : 'dark');
+    });
+    document.getElementById('mobileThemeBtn')?.addEventListener('click', () => {
+        setTheme(body.classList.contains('dark') ? 'light' : 'dark');
+    });
+
+    // Бургер меню
+    const burgerBtn = document.getElementById('burgerBtn');
+    const mobileNav = document.getElementById('mobileNav');
+    const overlay = document.getElementById('mobileOverlay');
+    function closeMobileMenu() {
+        mobileNav.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    function openMobileMenu() {
+        mobileNav.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    burgerBtn?.addEventListener('click', () => {
+        if(mobileNav.classList.contains('active')) closeMobileMenu();
+        else openMobileMenu();
+    });
+    overlay?.addEventListener('click', closeMobileMenu);
+    // Кнопки внутри мобильного меню
+    document.getElementById('mobileLoginBtn')?.addEventListener('click', () => {
+        closeMobileMenu();
+        closeModals();
+        loginModal.classList.add('active');
+    });
+    document.getElementById('mobileRegBtn')?.addEventListener('click', () => {
+        closeMobileMenu();
+        closeModals();
+        regModal.classList.add('active');
+    });
+    // закрыть при клике на ссылки
+    document.querySelectorAll('.mobile-nav a').forEach(link => {
+        link.addEventListener('click', closeMobileMenu);
+    });
+
+    simulateLoading();
+    setTimeout(() => {
+        const toast = document.createElement('div');
+        toast.innerHTML = '<i class="fas fa-check-circle"></i> DevTrust — готова к работе. 200+ приложений';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '24px';
+        toast.style.right = '24px';
+        toast.style.background = 'var(--bg-elevated)';
+        toast.style.border = '1px solid var(--accent-primary)';
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '60px';
+        toast.style.fontSize = '0.8rem';
+        toast.style.zIndex = '999';
+        toast.style.backdropFilter = 'blur(8px)';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }, 1800);
+</script>
+</body>
+</html>
