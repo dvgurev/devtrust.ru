@@ -2,31 +2,13 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { CreditCard, Calendar, AppWindow, ExternalLink, ArrowRight, Sparkles, AlertCircle, Check, Settings, Package, Shield, Zap } from "lucide-react"
-
-function ManageSubscriptionButton() {
-  return (
-    <form action={async () => {
-      "use server"
-      const baseUrl = process.env.SITE_URL || "https://devtrust.ru"
-      const res = await fetch(`${baseUrl}/api/billing/portal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ returnUrl: `${baseUrl}/dashboard/subscriptions` }),
-        cache: "no-store",
-      })
-      const data = await res.json()
-      if (data.url) {
-        redirect(data.url)
-      }
-    }}>
-      <button className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-400 to-orange-400 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-red-500/25 transition-all">
-        <Settings className="w-5 h-5" />
-        Управление подписками
-      </button>
-    </form>
-  )
-}
+import {
+  CreditCard, Calendar, AppWindow, ExternalLink, ArrowRight,
+  Sparkles, AlertCircle, Check, Settings, Package, Shield,
+  ArrowUpRight, Clock, XCircle
+} from "lucide-react"
+import { SubscriptionEditModal } from "@/components/subscription-edit-modal"
+import { CancelSubscriptionButton } from "@/components/cancel-subscription-button"
 
 export default async function DashboardSubscriptionsPage() {
   const session = await auth()
@@ -55,234 +37,273 @@ export default async function DashboardSubscriptionsPage() {
 
   const subscriptions = user?.memberships?.flatMap((m: any) => m.organization?.subscriptions || []) || []
 
+  const activeCount = subscriptions.filter((s: any) => s.status === "ACTIVE").length
+  const expiringSoonCount = subscriptions.filter((s: any) => {
+    const end = s.currentPeriodEnd
+    if (!end) return false
+    const days = Math.ceil((new Date(end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    return days <= 7 && days > 0
+  }).length
+  const monthlyTotal = subscriptions.reduce((sum: number, s: any) => sum + (s.plan?.price || 0), 0)
+
+  const firstSubscription = subscriptions[0]
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-12 md:pt-28 md:pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-cyan-50" />
-        <div className="absolute top-10 left-[10%] w-[400px] h-[400px] bg-blue-200/30 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-[5%] w-[300px] h-[300px] bg-cyan-200/30 rounded-full blur-3xl" />
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl lg:text-4xl font-black text-neutral-900 tracking-tight">
+            Подписки
+          </h1>
+          <p className="text-neutral-500 mt-1">
+            Управляйте своими подписками и платежами
+          </p>
+        </div>
+        <div className="flex gap-3">
+          {firstSubscription && (
+            <Link
+              href={`/dashboard/subscriptions/${firstSubscription.id}`}
+              className="inline-flex items-center gap-2 px-5 py-3 bg-neutral-900 text-white 
+                rounded-full font-bold text-sm hover:bg-neutral-800 transition-all duration-300"
+            >
+              <Settings className="w-4 h-4" />
+              Управление подписками
+              <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          )}
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-neutral-900 text-white 
+              rounded-full font-bold text-sm hover:bg-neutral-800 transition-all duration-300"
+          >
+            <Sparkles className="w-4 h-4" />
+            Добавить
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
 
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+      {/* Stats */}
+      {subscriptions.length > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-white rounded-3xl border border-neutral-100 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <Check className="w-5 h-5 text-emerald-500" />
+              </div>
               <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl border border-white/40 text-blue-500 rounded-full text-sm font-medium mb-4 shadow-sm">
-                  <Package className="w-4 h-4" />
-                  Управление подписками
-                </div>
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
-                  Подписки
-                </h1>
-                <p className="text-lg text-slate-600">Управляйте своими подписками и платежами</p>
+                <div className="text-2xl font-black text-neutral-900">{activeCount}</div>
+                <div className="text-xs text-neutral-400">Активных</div>
               </div>
-              <ManageSubscriptionButton />
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl border border-neutral-100 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Clock className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-neutral-900">{expiringSoonCount}</div>
+                <div className="text-xs text-neutral-400">Истекают скоро</div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl border border-neutral-100 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <div className="text-2xl font-black text-neutral-900">
+                  {monthlyTotal.toLocaleString("ru")} ₽
+                </div>
+                <div className="text-xs text-neutral-400">В месяц</div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Main Content */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            {subscriptions.length === 0 ? (
-              <div className="text-center py-16 bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-xl shadow-black/5">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CreditCard className="w-10 h-10 text-blue-500" />
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">
-                  У вас пока нет подписок
-                </h3>
-                <p className="text-slate-500 mb-8 max-w-md mx-auto text-lg">
-                  Подпишитесь на приложения для управления вашим бизнесом
-                </p>
-                <Link
-                  href="/catalog"
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-400 to-cyan-400 text-white font-semibold rounded-xl hover:shadow-xl hover:shadow-blue-500/25 transition-all"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  Открыть каталог
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {subscriptions.map((sub: any) => {
-                  const app = sub.plan?.app
-                  const periodEnd = sub.currentPeriodEnd
-                  const daysLeft = periodEnd ? Math.ceil((new Date(periodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
-                  const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
-                  const isExpired = daysLeft !== null && daysLeft < 0
+      {/* Subscriptions List */}
+      {subscriptions.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-3xl border border-neutral-100">
+          <div className="w-20 h-20 bg-neutral-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <CreditCard className="w-10 h-10 text-neutral-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-neutral-900 mb-3">
+            У вас пока нет подписок
+          </h3>
+          <p className="text-neutral-500 mb-8 max-w-md mx-auto">
+            Подпишитесь на приложения для управления вашим бизнесом
+          </p>
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-neutral-900 text-white 
+              rounded-full font-bold hover:bg-neutral-800 transition-all duration-300"
+          >
+            <Sparkles className="w-4 h-4" />
+            Открыть каталог
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {subscriptions.map((sub: any) => {
+            const app = sub.plan?.app
+            const periodEnd = sub.currentPeriodEnd
+            const daysLeft = periodEnd
+              ? Math.ceil((new Date(periodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+              : null
+            const isExpiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0
+            const isExpired = daysLeft !== null && daysLeft < 0
 
-                  return (
-                    <div
-                      key={sub.id}
-                      className="group bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-xl shadow-black/5 p-6 hover:shadow-2xl hover:shadow-black/10 hover:border-white/50 transition-all"
+            const allPlans = app?.plans?.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              price: Number(p.price),
+              slug: p.slug,
+              features: p.features as string[] | null,
+            })) || []
+
+            return (
+              <div
+                key={sub.id}
+                className="bg-white rounded-3xl border border-neutral-100 p-6
+                  hover:shadow-lg transition-all duration-300"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  {/* App Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-neutral-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                      {app?.iconUrl ? (
+                        <img src={app.iconUrl} alt={app.name} className="w-7 h-7 rounded-lg" />
+                      ) : (
+                        <AppWindow className="w-6 h-6 text-neutral-500" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-neutral-900">
+                        {app?.name || "Приложение"}
+                      </h3>
+                      <p className="text-sm text-neutral-500">{sub.plan?.name}</p>
+                    </div>
+                  </div>
+
+                  {/* Price & Status */}
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <p className="font-bold text-neutral-900">
+                        {sub.plan?.price > 0
+                          ? `${sub.plan.price.toLocaleString("ru")} ₽/мес`
+                          : "Бесплатно"}
+                      </p>
+                      {sub.status === "ACTIVE" ? (
+                        <span className="inline-flex items-center gap-1 text-sm text-emerald-600 font-medium">
+                          <Check className="w-3.5 h-3.5" />
+                          Активна
+                        </span>
+                      ) : sub.status === "CANCELED" ? (
+                        <span className="inline-flex items-center gap-1 text-sm text-amber-600 font-medium">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Отменена
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-sm text-red-600 font-medium">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Неактивна
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Period */}
+                    <div className="text-sm text-neutral-500">
+                      {periodEnd ? (
+                        isExpired ? (
+                          <span className="text-red-600 font-medium">
+                            Истекла {new Date(periodEnd).toLocaleDateString("ru")}
+                          </span>
+                        ) : isExpiringSoon ? (
+                          <span className="text-amber-600 font-medium">
+                            Истекает через {daysLeft} дн.
+                          </span>
+                        ) : (
+                          <span>До {new Date(periodEnd).toLocaleDateString("ru")}</span>
+                        )
+                      ) : (
+                        <span>Бессрочно</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/apps/${app?.slug}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 
+                        bg-neutral-900 text-white rounded-xl font-medium text-sm
+                        hover:bg-neutral-800 transition-all duration-300"
                     >
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center group-hover:from-blue-200 group-hover:to-cyan-200 transition-all">
-                            {app?.iconUrl ? (
-                              <img src={app.iconUrl} alt={app.name} className="w-9 h-9" />
-                            ) : (
-                              <AppWindow className="w-8 h-8 text-blue-500" />
-                            )}
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-slate-900 text-lg">{app?.name || "Приложение"}</h3>
-                            <p className="text-sm text-slate-500">{sub.plan?.name}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-slate-900 text-xl">
-                            {sub.plan?.price > 0 ? `${sub.plan.price.toLocaleString("ru")} ₽/мес` : "Бесплатно"}
-                          </p>
-                          {sub.status === "ACTIVE" ? (
-                            <span className="inline-flex items-center gap-1 text-sm text-green-600 font-medium">
-                              <Check className="w-4 h-4" />
-                              Активна
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-sm text-red-600 font-medium">
-                              <AlertCircle className="w-4 h-4" />
-                              Неактивна
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                      Открыть
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
 
-                      <div className="flex items-center justify-between pt-6 border-t border-white/30">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <Calendar className="w-4 h-4" />
-                            {periodEnd ? (
-                              isExpired ? (
-                                <span className="text-red-600 font-medium">Истекла {new Date(periodEnd).toLocaleDateString("ru")}</span>
-                              ) : isExpiringSoon ? (
-                                <span className="text-orange-600 font-medium">Истекает через {daysLeft} дн.</span>
-                              ) : (
-                                <span>До {new Date(periodEnd).toLocaleDateString("ru")}</span>
-                              )
-                            ) : (
-                              <span>Бессрочно</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <form action={async () => {
-                            "use server"
-                            const baseUrl = process.env.SITE_URL || "https://devtrust.ru"
-                            const res = await fetch(`${baseUrl}/api/billing/portal`, {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ returnUrl: `${baseUrl}/dashboard/subscriptions` }),
-                              cache: "no-store",
-                            })
-                            const data = await res.json()
-                            if (data.url) {
-                              redirect(data.url)
-                            }
-                          }}>
-                            <button
-                              type="submit"
-                              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
-                            >
-                              <Settings className="w-4 h-4" />
-                              Управление
-                            </button>
-                          </form>
-                          <Link
-                            href={`/apps/${app?.slug}`}
-                            className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
-                          >
-                            Открыть
-                            <ExternalLink className="w-4 h-4" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                    {/* Управление конкретной подпиской */}
+                    <Link
+                      href={`/dashboard/subscriptions/${sub.id}`}
+                      className="inline-flex items-center justify-center w-10 h-10 
+                        border border-neutral-200 text-neutral-500 rounded-xl
+                        hover:bg-neutral-50 hover:text-neutral-700 transition-all duration-300"
+                      title="Управление подпиской"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Link>
 
-            {/* Support Card */}
-            <div className="mt-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl p-8 text-white">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 bg-white/20 rounded-lg">
-                      <Shield className="w-5 h-5" />
-                    </div>
-                    <h3 className="font-semibold text-xl">Нужна помощь?</h3>
-                  </div>
-                  <p className="text-blue-100 text-lg max-w-2xl">
-                    Свяжитесь с нашей поддержкой для решения любых вопросов по подпискам, платежам или настройке приложений.
-                  </p>
-                </div>
-                <Link
-                  href="/docs/contact"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl text-white font-medium transition-all"
-                >
-                  <Zap className="w-5 h-5" />
-                  Связаться с поддержкой
-                </Link>
-              </div>
-            </div>
+                    {/* Модалка смены тарифа */}
+                    <SubscriptionEditModal
+                      subscriptionId={sub.id}
+                      currentPlanId={sub.plan?.id}
+                      plans={allPlans}
+                    />
 
-            {/* Stats */}
-            {subscriptions.length > 0 && (
-              <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-xl shadow-black/5 p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-green-50 text-green-600 rounded-xl">
-                      <Check className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-slate-900">
-                        {subscriptions.filter((s: any) => s.status === "ACTIVE").length}
-                      </div>
-                      <div className="text-sm text-slate-500">Активных подписок</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-xl shadow-black/5 p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                      <Calendar className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-slate-900">
-                        {subscriptions.filter((s: any) => {
-                          const end = s.currentPeriodEnd
-                          if (!end) return false
-                          const days = Math.ceil((new Date(end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-                          return days <= 7 && days > 0
-                        }).length}
-                      </div>
-                      <div className="text-sm text-slate-500">Истекают скоро</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white/60 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-xl shadow-black/5 p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                      <CreditCard className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-slate-900">
-                        {subscriptions.reduce((sum: number, s: any) => sum + (s.plan?.price || 0), 0).toLocaleString("ru")} ₽
-                      </div>
-                      <div className="text-sm text-slate-500">Ежемесячные расходы</div>
-                    </div>
+                    {/* Кнопка отмены подписки */}
+                    {sub.status === "ACTIVE" && (
+                      <CancelSubscriptionButton
+                        subscriptionId={sub.id}
+                        appName={app?.name || "Приложение"}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            )
+          })}
         </div>
-      </section>
+      )}
+
+      {/* Help */}
+      <div className="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl p-6 lg:p-8 border border-violet-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-5 h-5 text-violet-500" />
+              <h3 className="font-bold text-violet-900">Нужна помощь?</h3>
+            </div>
+            <p className="text-violet-700 text-sm max-w-lg">
+              Свяжитесь с поддержкой для решения любых вопросов по подпискам и платежам.
+            </p>
+          </div>
+          <Link
+            href="/docs/contact"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white 
+              rounded-full font-bold text-sm hover:bg-violet-700 transition-all duration-300
+              flex-shrink-0"
+          >
+            Связаться с поддержкой
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

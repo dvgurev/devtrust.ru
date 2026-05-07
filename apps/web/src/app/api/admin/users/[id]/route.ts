@@ -9,6 +9,7 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(8).optional(),
   isVerified: z.boolean().optional(),
+  role: z.enum(["USER", "ADMIN"]).optional(),
 })
 
 export async function GET(
@@ -80,6 +81,7 @@ export async function PUT(
     if (validated.password) {
       updateData.password = await bcrypt.hash(validated.password, 12)
     }
+    if (validated.role !== undefined) updateData.role = validated.role
 
     const updated = await prisma.user.update({
       where: { id },

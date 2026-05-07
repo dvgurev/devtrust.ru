@@ -594,12 +594,7 @@ export function AppFooter() {
   const currentYear = new Date().getFullYear()
 
   const footerLinks = useMemo(() => ({
-    products: [
-      { href: "/catalog", label: "Все приложения" },
-      { href: "/catalog?category=crm", label: "CRM системы" },
-      { href: "/catalog?category=documents", label: "Документооборот" },
-      { href: "/catalog?category=analytics", label: "Аналитика" },
-    ],
+
     company: [
       { href: "/blog", label: "Блог" },
       { href: "/about", label: "О компании" },
@@ -641,7 +636,7 @@ export function AppFooter() {
           </div>
 
           {/* Секции */}
-          <FooterSection title="Продукты" links={footerLinks.products} />
+
           <FooterSection title="Компания" links={footerLinks.company} />
           <FooterSection title="Документы" links={footerLinks.legal} />
         </div>
@@ -655,7 +650,7 @@ export function AppFooter() {
           <div className="flex items-center gap-3 text-sm text-neutral-500">
             <span>🇷🇺 Россия</span>
             <span className="w-1 h-1 rounded-full bg-neutral-700" />
-            <span>Москва</span>
+            <span>Омск</span>
           </div>
         </div>
       </div>
