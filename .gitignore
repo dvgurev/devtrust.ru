@@ -1,6 +1,7 @@
 # Зависимости
 node_modules/
 .pnpm-store/
+.turbo/
 **/.pnpm-store/
 
 # Next.js
